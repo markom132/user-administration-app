@@ -1,15 +1,22 @@
 package com.user_admin.app.controller;
 
+import com.user_admin.app.model.dto.LoginRequestDTO;
 import com.user_admin.app.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
+@Validated
 public class UserController {
 
     private final UserService userService;
@@ -19,8 +26,8 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        Map<String, Object> response = userService.login(body);
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
+        Map<String, Object> response = userService.login(loginRequest);
         return ResponseEntity.ok(response);
     }
 
@@ -37,4 +44,11 @@ public class UserController {
         return ResponseEntity.ok("Logged out successfully");
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestParam @NotBlank(message = "Email cannot be blank")
+                                            @Size(min = 3, max = 255, message = "Email must be between 3 and 255 characters")
+                                            @Email(message = "Email should be valid") String email) {
+        userService.forgotPassword(email);
+        return ResponseEntity.ok("Password reset email sent");
+    }
 }

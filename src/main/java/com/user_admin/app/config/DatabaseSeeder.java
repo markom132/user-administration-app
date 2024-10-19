@@ -23,9 +23,11 @@ public class DatabaseSeeder implements CommandLineRunner {
         if (userRepository.count() == 0) {
             User user1 = new User("john.doe@example.com", passwordEncoder.encode("password123"), "John", "Doe", UserStatus.ACTIVE);
             User user2 = new User("jane.smith@example.com", passwordEncoder.encode("password123"), "Jane", "Smith", UserStatus.ACTIVE);
+            User user3 = new User("markomarkoviccb@gmail.com", passwordEncoder.encode("password123"), "Jane", "Smith", UserStatus.ACTIVE);
 
             userRepository.save(user1);
             userRepository.save(user2);
+            userRepository.save(user3);
 
             System.out.println("Initial Users are injected into database");
         }
