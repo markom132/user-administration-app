@@ -1,5 +1,7 @@
 package com.user_admin.app.config;
 
+import com.user_admin.app.model.AuthToken;
+import com.user_admin.app.repository.AuthTokenRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,17 +17,20 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
+    private final AuthTokenRepository authTokenRepository;
 
     @Autowired
-    public JwtRequestFilter(UserDetailsService userDetailsService, JwtUtil jwtUtil) {
+    public JwtRequestFilter(UserDetailsService userDetailsService, JwtUtil jwtUtil, AuthTokenRepository authTokenRepository) {
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
+        this.authTokenRepository = authTokenRepository;
     }
 
     @Override
@@ -52,6 +57,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+                AuthToken authToken = authTokenRepository.findByToken(jwtToken)
+                        .orElseThrow(() -> new RuntimeException("Auth token not found"));
+                authToken.setLastUsedAt(LocalDateTime.now());
+                authTokenRepository.save(authToken);
             }
         }
         filterChain.doFilter(request, response);
