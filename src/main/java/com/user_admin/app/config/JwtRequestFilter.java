@@ -53,13 +53,18 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
 
             if (jwtUtil.validateToken(jwtToken, userDetails)) {
+                AuthToken authToken = authTokenRepository.findByToken(jwtToken)
+                        .orElseThrow(() -> new RuntimeException("Auth token not found"));
+
+                if (authToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+                    throw new RuntimeException("Token has expired");
+                }
+
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
-                AuthToken authToken = authTokenRepository.findByToken(jwtToken)
-                        .orElseThrow(() -> new RuntimeException("Auth token not found"));
                 authToken.setLastUsedAt(LocalDateTime.now());
                 authTokenRepository.save(authToken);
             }

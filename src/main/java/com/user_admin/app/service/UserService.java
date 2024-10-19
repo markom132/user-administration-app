@@ -80,4 +80,14 @@ public class UserService {
             throw new RuntimeException("Invalid credentials");
         }
     }
+
+    public void logout(String authorizationHeader) {
+        String token = authorizationHeader.substring(7);
+        AuthToken authToken = authTokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Token not found"));
+
+        authToken.setExpiresAt(LocalDateTime.now());
+        authTokenRepository.save(authToken);
+    }
+
 }
