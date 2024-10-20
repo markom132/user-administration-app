@@ -122,10 +122,7 @@ public class UserService {
 
         String resetLink = "http://localhost/reset-password/" +resetToken + "/" + email;
 
-        String subject = "Password Reset Request";
-        String message = "Click the following link to reset your password: " + resetLink;
-
-        emailService.sendEmail(email, subject, message);
+        emailService.sendResetPasswordEmail(email, resetLink);
     }
 
 }
