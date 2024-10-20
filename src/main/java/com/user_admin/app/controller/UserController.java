@@ -1,15 +1,14 @@
 package com.user_admin.app.controller;
 
 import com.user_admin.app.model.dto.LoginRequestDTO;
+import com.user_admin.app.model.dto.ResetPasswordDTO;
 import com.user_admin.app.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,5 +50,16 @@ public class UserController {
                                             @Email(message = "Email should be valid") String email) {
         userService.forgotPassword(email);
         return ResponseEntity.ok("Password reset email sent");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Validated @RequestBody ResetPasswordDTO resetPasswordDTO) {
+        try {
+            userService.validatePasswordResetRequest(resetPasswordDTO);
+
+            return ResponseEntity.ok("Password reset successfully. You can login with your new password now");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

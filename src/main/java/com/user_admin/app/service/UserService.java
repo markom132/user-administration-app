@@ -6,6 +6,7 @@ import com.user_admin.app.model.PasswordResetToken;
 import com.user_admin.app.model.User;
 import com.user_admin.app.model.UserStatus;
 import com.user_admin.app.model.dto.LoginRequestDTO;
+import com.user_admin.app.model.dto.ResetPasswordDTO;
 import com.user_admin.app.repository.AuthTokenRepository;
 import com.user_admin.app.repository.PasswordResetTokenRepository;
 import com.user_admin.app.repository.UserRepository;
@@ -19,7 +20,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -32,8 +35,9 @@ public class UserService {
     private final AuthTokenRepository authTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
+    private final PasswordResetTokenService passwordResetTokenService;
 
-    public UserService(UserRepository userRepository, JwtUtil jwtUtil, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, AuthTokenRepository authTokenRepository, PasswordResetTokenRepository passwordResetTokenRepository, EmailService emailService) {
+    public UserService(UserRepository userRepository, JwtUtil jwtUtil, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, AuthTokenRepository authTokenRepository, PasswordResetTokenRepository passwordResetTokenRepository, EmailService emailService, PasswordResetTokenService passwordResetTokenService) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.authenticationManager = authenticationManager;
@@ -41,6 +45,7 @@ public class UserService {
         this.authTokenRepository = authTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.emailService = emailService;
+        this.passwordResetTokenService = passwordResetTokenService;
     }
 
     public Map<String, Object> login(LoginRequestDTO loginRequest) {
@@ -110,19 +115,71 @@ public class UserService {
         }
 
         String resetToken = KeyGenerators.string().generateKey();
+        String hashedToken = passwordEncoder.encode(resetToken);
         LocalDateTime expiresAt = LocalDateTime.now().plusHours(1);
 
         PasswordResetToken passwordResetToken = new PasswordResetToken();
-        passwordResetToken.setToken(resetToken);
+        passwordResetToken.setToken(hashedToken);
         passwordResetToken.setUser(user);
         passwordResetToken.setCreatedAt(LocalDateTime.now());
         passwordResetToken.setExpiresAt(expiresAt);
 
         passwordResetTokenRepository.save(passwordResetToken);
 
-        String resetLink = "http://localhost:8080/api/reset-password/" +resetToken + "/" + email;
+        String resetLink = "http://localhost:8080/api/reset-password/" + resetToken + "/" + email;
 
         emailService.sendResetPasswordEmail(email, resetLink);
+    }
+
+    public void validatePasswordResetRequest(ResetPasswordDTO resetPasswordDTO) {
+        if (!resetPasswordDTO.getNewPassword().equals(resetPasswordDTO.getConfirmationPassword())) {
+            throw new RuntimeException("New password and confirmation password don't match");
+        }
+
+        if (!isValidPassword(resetPasswordDTO.getNewPassword())) {
+            throw new RuntimeException("Password must contain at least one uppercase letter, one number, and one special character");
+        }
+
+        String email = resetPasswordDTO.getEmail();
+        String token = resetPasswordDTO.getToken();
+
+        List<PasswordResetToken> resetTokens = passwordResetTokenRepository.findAllByUserEmail(email);
+
+        if (resetTokens.isEmpty()) {
+            throw new RuntimeException("No reset tokens for email: " + email);
+        }
+
+        PasswordResetToken validToken = resetTokens.stream()
+                .max(Comparator.comparing(PasswordResetToken::getCreatedAt))
+                .orElseThrow(() -> new RuntimeException("No valid reset tokens found for email: " + email));
+
+        if (!passwordEncoder.matches(token, validToken.getToken())) {
+            throw new RuntimeException("Invalid reset token");
+        }
+
+        if (validToken.getUser().getStatus().equals(UserStatus.INACTIVE)) {
+            throw new RuntimeException("User is inactive: " + validToken.getUser().getEmail());
+        }
+
+        if (validToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Reset token is expired");
+        }
+
+        updatePassword(email, resetPasswordDTO.getNewPassword());
+        passwordResetTokenService.deleteResetToken(validToken);
+    }
+
+    public void updatePassword(String email, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    public boolean isValidPassword(String password) {
+        String passwordRegex = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@#$%^&+=!]).{8,}$";
+        return password.matches(passwordRegex);
     }
 
 }
