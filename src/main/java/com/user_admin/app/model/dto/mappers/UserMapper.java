@@ -45,6 +45,12 @@ public class UserMapper {
         );
     }
 
+    public List<UserDTO> toDtoList(List<User> users) {
+        return users.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     public User toEntity(UserDTO userDTO) {
         if (userDTO == null) {
             return null;

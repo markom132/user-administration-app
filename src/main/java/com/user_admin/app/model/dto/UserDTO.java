@@ -1,5 +1,6 @@
 package com.user_admin.app.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -23,10 +24,13 @@ public class UserDTO {
     @Email
     private String email;
 
+    @JsonIgnore
     private String status;
 
+    @JsonIgnore
     private List<AuthTokenDTO> authTokens;
 
+    @JsonIgnore
     private List<PasswordResetTokenDTO> passwordResetTokens;
 
 }

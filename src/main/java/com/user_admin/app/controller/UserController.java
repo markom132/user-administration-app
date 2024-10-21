@@ -1,8 +1,10 @@
 package com.user_admin.app.controller;
 
+import com.user_admin.app.model.User;
 import com.user_admin.app.model.dto.ActivateAccountDTO;
 import com.user_admin.app.model.dto.LoginRequestDTO;
 import com.user_admin.app.model.dto.ResetPasswordDTO;
+import com.user_admin.app.model.dto.UserDTO;
 import com.user_admin.app.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -13,10 +15,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api")
 @Validated
 public class UserController {
 
@@ -26,13 +29,13 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/login")
+    @PostMapping("/auth/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
         Map<String, Object> response = userService.login(loginRequest);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/logout")
+    @PostMapping("/auth/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
         String authorizationHeader = request.getHeader("Authorization");
 
@@ -44,7 +47,7 @@ public class UserController {
         return ResponseEntity.ok("Logged out successfully");
     }
 
-    @PostMapping("/forgot-password")
+    @PostMapping("/auth/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam @NotBlank(message = "Email cannot be blank")
                                             @Size(min = 3, max = 255, message = "Email must be between 3 and 255 characters")
                                             @Email(message = "Email should be valid") String email) {
@@ -52,7 +55,7 @@ public class UserController {
         return ResponseEntity.ok("Password reset email sent");
     }
 
-    @PostMapping("/reset-password")
+    @PostMapping("/auth/reset-password")
     public ResponseEntity<?> resetPassword(@Validated @RequestBody ResetPasswordDTO resetPasswordDTO) {
         try {
             userService.validatePasswordResetRequest(resetPasswordDTO);
@@ -62,7 +65,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/activate-account")
+    @PostMapping("/auth/activate-account")
     public ResponseEntity<?> activateAccount(@Validated @RequestBody ActivateAccountDTO activateAccountDTO) {
         try {
             userService.validateActivateAccountRequest(activateAccountDTO);
@@ -70,5 +73,13 @@ public class UserController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/users")
+    public List<UserDTO> getUsers(@RequestParam(required = true) String accountStatus,
+                                  @RequestParam(required = false, defaultValue = "") String name,
+                                  @RequestParam(required = false, defaultValue = "") String email) {
+
+        return userService.getUsersByFilters(accountStatus, name, email);
     }
 }

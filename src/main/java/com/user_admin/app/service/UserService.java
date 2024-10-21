@@ -8,6 +8,8 @@ import com.user_admin.app.model.UserStatus;
 import com.user_admin.app.model.dto.ActivateAccountDTO;
 import com.user_admin.app.model.dto.LoginRequestDTO;
 import com.user_admin.app.model.dto.ResetPasswordDTO;
+import com.user_admin.app.model.dto.UserDTO;
+import com.user_admin.app.model.dto.mappers.UserMapper;
 import com.user_admin.app.repository.AuthTokenRepository;
 import com.user_admin.app.repository.PasswordResetTokenRepository;
 import com.user_admin.app.repository.UserRepository;
@@ -21,10 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,8 +37,9 @@ public class UserService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
     private final PasswordResetTokenService passwordResetTokenService;
+    private final UserMapper userMapper;
 
-    public UserService(UserRepository userRepository, JwtUtil jwtUtil, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, AuthTokenRepository authTokenRepository, PasswordResetTokenRepository passwordResetTokenRepository, EmailService emailService, PasswordResetTokenService passwordResetTokenService) {
+    public UserService(UserRepository userRepository, JwtUtil jwtUtil, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, AuthTokenRepository authTokenRepository, PasswordResetTokenRepository passwordResetTokenRepository, EmailService emailService, PasswordResetTokenService passwordResetTokenService, UserMapper userMapper) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.authenticationManager = authenticationManager;
@@ -48,6 +48,7 @@ public class UserService {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.emailService = emailService;
         this.passwordResetTokenService = passwordResetTokenService;
+        this.userMapper = userMapper;
     }
 
     public Map<String, Object> login(LoginRequestDTO loginRequest) {
@@ -228,6 +229,23 @@ public class UserService {
         userRepository.save(user);
 
         passwordResetTokenService.deleteActivateAccountToken(latestToken);
+    }
+
+    public List<UserDTO> getUsersByFilters(String status, String name, String email) {
+
+        String firstName = "";
+        String lastName = "";
+        if (!name.isEmpty()) {
+            String[] chars = name.split(" ", 2);
+            firstName = chars[0];
+            if (chars.length > 1) {
+                lastName = chars[1];
+            }
+        }
+
+        Optional<List<User>> users = userRepository.findByFilters(UserStatus.valueOf(status), firstName, lastName, email);
+
+        return users.map(userMapper::toDtoList).orElseGet(Collections::emptyList);
     }
 
 }
