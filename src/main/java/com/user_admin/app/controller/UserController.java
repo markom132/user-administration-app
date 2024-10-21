@@ -1,5 +1,6 @@
 package com.user_admin.app.controller;
 
+import com.user_admin.app.model.dto.ActivateAccountDTO;
 import com.user_admin.app.model.dto.LoginRequestDTO;
 import com.user_admin.app.model.dto.ResetPasswordDTO;
 import com.user_admin.app.service.UserService;
@@ -40,7 +41,6 @@ public class UserController {
         }
 
         userService.logout(authorizationHeader);
-
         return ResponseEntity.ok("Logged out successfully");
     }
 
@@ -56,8 +56,17 @@ public class UserController {
     public ResponseEntity<?> resetPassword(@Validated @RequestBody ResetPasswordDTO resetPasswordDTO) {
         try {
             userService.validatePasswordResetRequest(resetPasswordDTO);
-
             return ResponseEntity.ok("Password reset successfully. You can login with your new password now");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/activate-account")
+    public ResponseEntity<?> activateAccount(@Validated @RequestBody ActivateAccountDTO activateAccountDTO) {
+        try {
+            userService.validateActivateAccountRequest(activateAccountDTO);
+            return ResponseEntity.ok("Account status changed successfully");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

@@ -5,6 +5,7 @@ import com.user_admin.app.model.AuthToken;
 import com.user_admin.app.model.PasswordResetToken;
 import com.user_admin.app.model.User;
 import com.user_admin.app.model.UserStatus;
+import com.user_admin.app.model.dto.ActivateAccountDTO;
 import com.user_admin.app.model.dto.LoginRequestDTO;
 import com.user_admin.app.model.dto.ResetPasswordDTO;
 import com.user_admin.app.repository.AuthTokenRepository;
@@ -24,6 +25,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -180,6 +182,52 @@ public class UserService {
     public boolean isValidPassword(String password) {
         String passwordRegex = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@#$%^&+=!]).{8,}$";
         return password.matches(passwordRegex);
+    }
+
+    public void validateActivateAccountRequest(ActivateAccountDTO activateAccountDTO) {
+        User user = userRepository.findByEmail(activateAccountDTO.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + activateAccountDTO.getEmail()));
+
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new RuntimeException("User is already active");
+        }
+
+        if (!activateAccountDTO.getPassword().equals(activateAccountDTO.getPasswordConfirmation())) {
+            throw new RuntimeException("New password and confirmation password don't match");
+        }
+
+        if (!isValidPassword(activateAccountDTO.getPassword())) {
+            throw new RuntimeException("Password must contain at least one uppercase letter, one number, and one special character");
+        }
+
+        if (!passwordEncoder.matches(activateAccountDTO.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid credentials");
+        }
+
+        activateAccount(user, activateAccountDTO.getActivateAccountToken());
+    }
+
+    public void activateAccount(User user, String activateAccountToken) {
+        List<PasswordResetToken> passwordResetTokens = passwordResetTokenRepository.findAllByUserEmail(user.getEmail());
+
+        List<PasswordResetToken> activateAccountTokens = passwordResetTokens.stream().filter(token -> token.getActivateAccountToken() != null).collect(Collectors.toList());
+
+        if (activateAccountTokens.isEmpty()) {
+            throw new RuntimeException("No activate account tokens for user: " + user.getEmail());
+        }
+
+        PasswordResetToken latestToken = activateAccountTokens.stream()
+                .max(Comparator.comparing(PasswordResetToken::getCreatedAt))
+                .orElseThrow(() -> new RuntimeException("No valid active tokens found for email: " + user.getEmail()));
+
+        if (!passwordEncoder.matches(activateAccountToken, latestToken.getActivateAccountToken())) {
+            throw new RuntimeException("Invalid activate account token");
+        }
+
+        user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+
+        passwordResetTokenService.deleteActivateAccountToken(latestToken);
     }
 
 }

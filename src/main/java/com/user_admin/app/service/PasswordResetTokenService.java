@@ -21,9 +21,11 @@ public class PasswordResetTokenService {
         this.passwordEncoder = passwordEncoder;
     }
 
-
-
     public void deleteResetToken(PasswordResetToken token) {
         passwordResetTokenRepository.delete(token);
+    }
+
+    public void deleteActivateAccountToken(PasswordResetToken passwordResetToken) {
+        passwordResetTokenRepository.delete(passwordResetToken);
     }
 }

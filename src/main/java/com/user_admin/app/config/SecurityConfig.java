@@ -35,7 +35,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         auth -> auth
                                 .requestMatchers("/reset-password/**", "/css/**", "/js/**", "/images/**").permitAll()
-                                .requestMatchers("/api/auth/login", "/api/auth/register", "api/auth/forgot-password/**", "/api/reset-password/**", "/api/auth/reset-password").permitAll()
+                                .requestMatchers("/api/auth/login", "/api/auth/register", "api/auth/forgot-password/**", "/api/reset-password/**", "/api/auth/reset-password", "/api/auth/activate-account").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(
