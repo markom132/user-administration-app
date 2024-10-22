@@ -201,9 +201,7 @@ public class UserService {
             throw new RuntimeException("Password must contain at least one uppercase letter, one number, and one special character");
         }
 
-        if (!passwordEncoder.matches(activateAccountDTO.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
-        }
+        user.setPassword(passwordEncoder.encode(activateAccountDTO.getPassword()));
 
         activateAccount(user, activateAccountDTO.getActivateAccountToken());
     }
@@ -246,6 +244,40 @@ public class UserService {
         Optional<List<User>> users = userRepository.findByFilters(UserStatus.valueOf(status), firstName, lastName, email);
 
         return users.map(userMapper::toDtoList).orElseGet(Collections::emptyList);
+    }
+
+    public void validateCrateUserRequest(String email) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new RuntimeException("User already exist with email: " + email);
+        }
+    }
+
+    public UserDTO createUser(UserDTO userDTO) {
+        String email = userDTO.getEmail();
+
+        validateCrateUserRequest(email);
+
+        userDTO.setStatus(UserStatus.INACTIVE.name());
+        User newUser = userMapper.toEntity(userDTO);
+
+        userRepository.save(newUser);
+
+        String activateToken = KeyGenerators.string().generateKey();
+        String hashedToken = passwordEncoder.encode(activateToken);
+        LocalDateTime expiresAt = LocalDateTime.now().plusHours(1);
+
+        PasswordResetToken passwordResetToken = new PasswordResetToken();
+        passwordResetToken.setActivateAccountToken(hashedToken);
+        passwordResetToken.setUser(newUser);
+        passwordResetToken.setCreatedAt(LocalDateTime.now());
+        passwordResetToken.setExpiresAt(expiresAt);
+
+        passwordResetTokenRepository.save(passwordResetToken);
+
+        String activateLink = "http://localhost:8080/api/activate-account/" + activateToken + "/" + email;
+
+        emailService.sendActivateAccountEmail(email, activateLink);
+        return userMapper.toDTO(newUser);
     }
 
 }

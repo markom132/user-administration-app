@@ -1,6 +1,5 @@
 package com.user_admin.app.controller;
 
-import com.user_admin.app.model.User;
 import com.user_admin.app.model.dto.ActivateAccountDTO;
 import com.user_admin.app.model.dto.LoginRequestDTO;
 import com.user_admin.app.model.dto.ResetPasswordDTO;
@@ -11,10 +10,12 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -69,7 +70,7 @@ public class UserController {
     public ResponseEntity<?> activateAccount(@Validated @RequestBody ActivateAccountDTO activateAccountDTO) {
         try {
             userService.validateActivateAccountRequest(activateAccountDTO);
-            return ResponseEntity.ok("Account status changed successfully");
+            return ResponseEntity.ok("Account is activated, you can log in now.");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -82,4 +83,21 @@ public class UserController {
 
         return userService.getUsersByFilters(accountStatus, name, email);
     }
+
+    @PostMapping("/users")
+    public ResponseEntity<Map<String, Object>> createUser(@Validated @RequestBody UserDTO userDTO) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            response.put("message", "Successfully created user " + userDTO.getFirstName().toUpperCase() + " " + userDTO.getLastName().toUpperCase());
+            response.put("user", userService.createUser(userDTO));
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (RuntimeException e) {
+            response.put("message", "Error creating user");
+            response.put("error", e.getMessage());
+
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+
 }

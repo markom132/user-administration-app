@@ -58,8 +58,8 @@ public class UserMapper {
 
         User user = new User();
         user.setId(userDTO.getId());
-        user.setFirstName(userDTO.getFirstName());
-        user.setLastName(userDTO.getLastName());
+        user.setFirstName(userDTO.getFirstName().toUpperCase());
+        user.setLastName(userDTO.getLastName().toUpperCase());
         user.setEmail(userDTO.getEmail());
         user.setStatus(UserStatus.valueOf(userDTO.getStatus()));
 

@@ -47,6 +47,31 @@ public class EmailService {
         }
     }
 
+    public void sendActivateAccountEmail(String to, String activateLink) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+            helper.setTo(to);
+            helper.setSubject("Reset Your Password");
+
+            String htmlContent = loadEmailTemplate("activate_account_template.html");
+
+            htmlContent = htmlContent.replace("{{activateLink}}", activateLink);
+
+            helper.setText(htmlContent, true);
+
+            ClassPathResource image = new ClassPathResource("static/user.png");
+            helper.addInline("logoImage", image);
+
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send reset password email", e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public String loadEmailTemplate(String templateName) throws IOException {
         InputStream resource = new ClassPathResource("templates/" + templateName).getInputStream();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {

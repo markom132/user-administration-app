@@ -14,6 +14,13 @@ public class PasswordController {
     public String showResetPasswordPage(@PathVariable String token, @PathVariable String email, Model model) {
         model.addAttribute("token", token);
         model.addAttribute("email", email);
-        return "reset-password";
+        return "reset_password";
+    }
+
+    @GetMapping("/activate-account/{activationToken}/{email}")
+    public String showActivateAccountPage(@PathVariable String activationToken, @PathVariable String email, Model model) {
+        model.addAttribute("activationToken", activationToken);
+        model.addAttribute("email", email);
+        return "activate_account";
     }
 }
