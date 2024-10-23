@@ -12,8 +12,6 @@ import com.user_admin.app.model.dto.LoginRequestDTO;
 import com.user_admin.app.model.dto.ResetPasswordDTO;
 import com.user_admin.app.model.dto.UserDTO;
 import com.user_admin.app.model.dto.mappers.UserMapper;
-import com.user_admin.app.repository.AuthTokenRepository;
-import com.user_admin.app.repository.PasswordResetTokenRepository;
 import com.user_admin.app.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,19 +33,17 @@ public class UserService {
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
-    private final AuthTokenRepository authTokenRepository;
-    private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final EmailService emailService;
+    private final AuthTokenService authTokenService;
     private final PasswordResetTokenService passwordResetTokenService;
+    private final EmailService emailService;
     private final UserMapper userMapper;
 
-    public UserService(UserRepository userRepository, JwtUtil jwtUtil, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, AuthTokenRepository authTokenRepository, PasswordResetTokenRepository passwordResetTokenRepository, EmailService emailService, PasswordResetTokenService passwordResetTokenService, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, JwtUtil jwtUtil, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, AuthTokenService authTokenService, EmailService emailService, PasswordResetTokenService passwordResetTokenService, UserMapper userMapper) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
-        this.authTokenRepository = authTokenRepository;
-        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.authTokenService = authTokenService;
         this.emailService = emailService;
         this.passwordResetTokenService = passwordResetTokenService;
         this.userMapper = userMapper;
@@ -73,18 +69,10 @@ public class UserService {
 
             String token = jwtUtil.generateToken(user);
 
-            AuthToken authToken = new AuthToken();
-            authToken.setToken(token);
-            authToken.setUser(user);
-            authToken.setCreatedAt(LocalDateTime.now());
-            authToken.setLastUsedAt(LocalDateTime.now());
-
-            LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(30);
-            authToken.setExpiresAt(expiresAt);
-            authTokenRepository.save(authToken);
+            AuthToken authToken = authTokenService.createAuthToken(token, user);
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            String formattedExpiresAt = expiresAt.format(formatter);
+            String formattedExpiresAt = authToken.getExpiresAt().format(formatter);
 
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("id", user.getId());
@@ -103,11 +91,9 @@ public class UserService {
 
     public void logout(String authorizationHeader) {
         String token = authorizationHeader.substring(7);
-        AuthToken authToken = authTokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Token not found"));
+        AuthToken authToken = authTokenService.findByToken(token);
 
-        authToken.setExpiresAt(LocalDateTime.now());
-        authTokenRepository.save(authToken);
+        authTokenService.updateToExpired(authToken);
     }
 
     @Transactional
@@ -121,15 +107,8 @@ public class UserService {
 
         String resetToken = KeyGenerators.string().generateKey();
         String hashedToken = passwordEncoder.encode(resetToken);
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(1);
 
-        PasswordResetToken passwordResetToken = new PasswordResetToken();
-        passwordResetToken.setToken(hashedToken);
-        passwordResetToken.setUser(user);
-        passwordResetToken.setCreatedAt(LocalDateTime.now());
-        passwordResetToken.setExpiresAt(expiresAt);
-
-        passwordResetTokenRepository.save(passwordResetToken);
+        passwordResetTokenService.createPasswordResetToken(hashedToken, user);
 
         String resetLink = "http://localhost:8080/api/reset-password/" + resetToken + "/" + email;
 
@@ -148,13 +127,16 @@ public class UserService {
         String email = resetPasswordDTO.getEmail();
         String token = resetPasswordDTO.getToken();
 
-        List<PasswordResetToken> resetTokens = passwordResetTokenRepository.findAllByUserEmail(email);
+        List<PasswordResetToken> resetTokens = passwordResetTokenService.findAllByUserEmail(email);
 
-        if (resetTokens.isEmpty()) {
+        List<PasswordResetToken> activateAccountTokens = resetTokens.stream().filter(resetToken -> resetToken.getToken() != null).collect(Collectors.toList());
+
+
+        if (activateAccountTokens.isEmpty()) {
             throw new RuntimeException("No reset tokens for email: " + email);
         }
 
-        PasswordResetToken validToken = resetTokens.stream()
+        PasswordResetToken validToken = activateAccountTokens.stream()
                 .max(Comparator.comparing(PasswordResetToken::getCreatedAt))
                 .orElseThrow(() -> new RuntimeException("No valid reset tokens found for email: " + email));
 
@@ -171,7 +153,7 @@ public class UserService {
         }
 
         updatePassword(email, resetPasswordDTO.getNewPassword());
-        passwordResetTokenService.deleteResetToken(validToken);
+        passwordResetTokenService.deleteToken(validToken);
     }
 
     public void updatePassword(String email, String newPassword) {
@@ -209,7 +191,7 @@ public class UserService {
     }
 
     public void activateAccount(User user, String activateAccountToken) {
-        List<PasswordResetToken> passwordResetTokens = passwordResetTokenRepository.findAllByUserEmail(user.getEmail());
+        List<PasswordResetToken> passwordResetTokens = passwordResetTokenService.findAllByUserEmail(user.getEmail());
 
         List<PasswordResetToken> activateAccountTokens = passwordResetTokens.stream().filter(token -> token.getActivateAccountToken() != null).collect(Collectors.toList());
 
@@ -228,7 +210,7 @@ public class UserService {
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
 
-        passwordResetTokenService.deleteActivateAccountToken(latestToken);
+        passwordResetTokenService.deleteToken(latestToken);
     }
 
     public List<UserDTO> getUsersByFilters(String status, String name, String email) {
@@ -248,7 +230,7 @@ public class UserService {
         return users.map(userMapper::toDtoList).orElseGet(Collections::emptyList);
     }
 
-    public void validateCrateUserRequest(String email) {
+    public void validateCreateUserRequest(String email) {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("User already exist with email: " + email);
         }
@@ -257,7 +239,7 @@ public class UserService {
     public UserDTO createUser(UserDTO userDTO) {
         String email = userDTO.getEmail();
 
-        validateCrateUserRequest(email);
+        validateCreateUserRequest(email);
 
         userDTO.setStatus(UserStatus.INACTIVE.name());
         User newUser = userMapper.toEntity(userDTO);
@@ -266,15 +248,8 @@ public class UserService {
 
         String activateToken = KeyGenerators.string().generateKey();
         String hashedToken = passwordEncoder.encode(activateToken);
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(1);
 
-        PasswordResetToken passwordResetToken = new PasswordResetToken();
-        passwordResetToken.setActivateAccountToken(hashedToken);
-        passwordResetToken.setUser(newUser);
-        passwordResetToken.setCreatedAt(LocalDateTime.now());
-        passwordResetToken.setExpiresAt(expiresAt);
-
-        passwordResetTokenRepository.save(passwordResetToken);
+        passwordResetTokenService.createActivateAccountToken(hashedToken, newUser);
 
         String activateLink = "http://localhost:8080/api/activate-account/" + activateToken + "/" + email;
 
@@ -284,8 +259,8 @@ public class UserService {
 
 
     public UserDTO getUserById(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User with ID: " + + id + " not found"));
-         return userMapper.toDTO(user);
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User with ID: " + +id + " not found"));
+        return userMapper.toDTO(user);
     }
 
     public UserDTO updateUser(Long id, UserDTO updatedData) {
@@ -306,5 +281,28 @@ public class UserService {
         User updateduser = userRepository.save(user);
 
         return userMapper.toDTO(updateduser);
+    }
+
+    public void resendActivationEmail(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id + " not found"));
+
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new RuntimeException("User with ID: " + id + " is already active");
+        }
+
+        List<PasswordResetToken> passwordResetTokens = passwordResetTokenService.findAllByUserEmail(user.getEmail());
+
+        List<PasswordResetToken> oldActivateAccountTokens = passwordResetTokens.stream().filter(token -> token.getActivateAccountToken() != null).collect(Collectors.toList());
+
+        oldActivateAccountTokens.forEach(passwordResetTokenService::deleteToken);
+
+        String newActivateToken = KeyGenerators.string().generateKey();
+        String hashedToken = passwordEncoder.encode(newActivateToken);
+
+        passwordResetTokenService.createPasswordResetToken(hashedToken, user);
+
+        String activateLink = "http://localhost:8080/api/activate-account/" + newActivateToken + "/" + user.getEmail();
+
+        emailService.sendActivateAccountEmail(user.getEmail(), activateLink);
     }
 }

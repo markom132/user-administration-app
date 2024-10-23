@@ -1,6 +1,7 @@
 package com.user_admin.app.repository;
 
 import com.user_admin.app.model.PasswordResetToken;
+import com.user_admin.app.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,4 +13,5 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
     Optional<PasswordResetToken> findByToken(String token);
     List<PasswordResetToken> findAllByUserEmail(String email);
     void deleteByToken(String token);
+    void deleteByUser(User user);
 }

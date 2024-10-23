@@ -53,7 +53,7 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
             helper.setTo(to);
-            helper.setSubject("Reset Your Password");
+            helper.setSubject("Activate Your Account");
 
             String htmlContent = loadEmailTemplate("activate_account_template.html");
 

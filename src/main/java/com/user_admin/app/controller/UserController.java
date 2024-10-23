@@ -34,20 +34,31 @@ public class UserController {
 
     @PostMapping("/auth/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
-        Map<String, Object> response = userService.login(loginRequest);
-        return ResponseEntity.ok(response);
+        Map<String, Object> response = new HashMap<>();
+        try {
+            response = userService.login(loginRequest);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (RuntimeException e) {
+            response.put("message", "Error occurred during login request");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @PostMapping("/auth/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
-        String authorizationHeader = request.getHeader("Authorization");
+        try {
+            String authorizationHeader = request.getHeader("Authorization");
 
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body("Authorization header is missing or invalid");
+            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+                return ResponseEntity.badRequest().body("Authorization header is missing or invalid");
+            }
+
+            userService.logout(authorizationHeader);
+            return ResponseEntity.ok("Logged out successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
-
-        userService.logout(authorizationHeader);
-        return ResponseEntity.ok("Logged out successfully");
     }
 
     @PostMapping("/auth/forgot-password")
@@ -127,6 +138,16 @@ public class UserController {
             response.put("error", e.getMessage());
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PostMapping("/users/{id}/resend-account-activation-email")
+    public ResponseEntity<String> resendActivationEmail(@PathVariable Long id) {
+        try {
+            userService.resendActivationEmail(id);
+            return ResponseEntity.status(HttpStatus.OK).body("Email send successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 

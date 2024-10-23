@@ -3,6 +3,8 @@ package com.user_admin.app.config;
 import com.user_admin.app.model.AuthToken;
 import com.user_admin.app.repository.AuthTokenRepository;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,7 +47,17 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             try {
                 email = jwtUtil.extractUsername(jwtToken);
             } catch (ExpiredJwtException e) {
-                System.out.println("JWT token expired");
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write(e.getMessage());
+                return;
+            } catch (SignatureException e) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write(e.getMessage());
+                return;
+            } catch (MalformedJwtException e) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write(e.getMessage());
+                return;
             }
         }
 
@@ -57,7 +69,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                         .orElseThrow(() -> new RuntimeException("Auth token not found"));
 
                 if (authToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-                    throw new RuntimeException("Token has expired");
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    response.getWriter().write("Token has expired");
+                    return;
                 }
 
                 UsernamePasswordAuthenticationToken authenticationToken =
