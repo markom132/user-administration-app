@@ -1,6 +1,7 @@
 package com.user_admin.app.service;
 
 import com.user_admin.app.config.JwtUtil;
+import com.user_admin.app.exceptions.ResourceNotFoundException;
 import com.user_admin.app.model.AuthToken;
 import com.user_admin.app.model.PasswordResetToken;
 import com.user_admin.app.model.User;
@@ -280,4 +281,9 @@ public class UserService {
         return userMapper.toDTO(newUser);
     }
 
+
+    public UserDTO getUserById(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User with ID: "+ + id + " not found"));
+         return userMapper.toDTO(user);
+    }
 }

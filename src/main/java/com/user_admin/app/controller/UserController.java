@@ -1,5 +1,7 @@
 package com.user_admin.app.controller;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import com.user_admin.app.model.User;
 import com.user_admin.app.model.dto.ActivateAccountDTO;
 import com.user_admin.app.model.dto.LoginRequestDTO;
 import com.user_admin.app.model.dto.ResetPasswordDTO;
@@ -77,6 +79,7 @@ public class UserController {
     }
 
     @GetMapping("/users")
+    @JsonView(UserDTO.BasicInfo.class)
     public List<UserDTO> getUsers(@RequestParam(required = true) String accountStatus,
                                   @RequestParam(required = false, defaultValue = "") String name,
                                   @RequestParam(required = false, defaultValue = "") String email) {
@@ -85,6 +88,7 @@ public class UserController {
     }
 
     @PostMapping("/users")
+    @JsonView(UserDTO.BasicInfo.class)
     public ResponseEntity<Map<String, Object>> createUser(@Validated @RequestBody UserDTO userDTO) {
         Map<String, Object> response = new HashMap<>();
         try {
@@ -98,6 +102,11 @@ public class UserController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+    @GetMapping("/users/{id}")
+    @JsonView(UserDTO.ExtendedInfo.class)
+    public ResponseEntity<UserDTO> getUser(@PathVariable Long id) {
 
+        return ResponseEntity.ok(userService.getUserById(id));
+    }
 
 }

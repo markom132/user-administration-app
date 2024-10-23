@@ -7,6 +7,7 @@ import com.user_admin.app.model.dto.PasswordResetTokenDTO;
 import com.user_admin.app.model.dto.UserDTO;
 import org.springframework.stereotype.Component;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,10 @@ public class UserMapper {
                 user.getPasswordResetTokens().stream().map(passwordResetTokenMapper::toDTO)
                         .collect(Collectors.toList()) : null;
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedCreatedAt =  user.getCreatedAt().format(formatter);
+        String formattedUpdatedAt =  user.getUpdatedAt().format(formatter);
+
         return new UserDTO(
                 user.getId(),
                 user.getFirstName(),
@@ -41,7 +46,9 @@ public class UserMapper {
                 user.getEmail(),
                 user.getStatus().name(),
                 authTokens,
-                passwordResetTokens
+                passwordResetTokens,
+                formattedCreatedAt,
+                formattedUpdatedAt
         );
     }
 
