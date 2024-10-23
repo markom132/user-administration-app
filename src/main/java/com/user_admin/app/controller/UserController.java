@@ -102,11 +102,32 @@ public class UserController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+
     @GetMapping("/users/{id}")
     @JsonView(UserDTO.ExtendedInfo.class)
     public ResponseEntity<UserDTO> getUser(@PathVariable Long id) {
 
         return ResponseEntity.ok(userService.getUserById(id));
+    }
+
+    @PutMapping("/users/{id}")
+    public ResponseEntity<Map<String, Object>> updateUser(@PathVariable Long id,
+                                                          @Validated @RequestBody UserDTO userDTO) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            UserDTO updatedUser = userService.updateUser(id, userDTO);
+
+            response.put("message", "Successfully updated user " + userDTO.getFirstName().toUpperCase() + " " + userDTO.getLastName().toUpperCase());
+            response.put("user", updatedUser);
+
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (RuntimeException e) {
+            response.put("message", "Error updating user");
+            response.put("error", e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
 }

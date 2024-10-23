@@ -1,6 +1,7 @@
 package com.user_admin.app.service;
 
 import com.user_admin.app.config.JwtUtil;
+import com.user_admin.app.exceptions.DuplicateEmailException;
 import com.user_admin.app.exceptions.ResourceNotFoundException;
 import com.user_admin.app.model.AuthToken;
 import com.user_admin.app.model.PasswordResetToken;
@@ -283,7 +284,27 @@ public class UserService {
 
 
     public UserDTO getUserById(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User with ID: "+ + id + " not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User with ID: " + + id + " not found"));
          return userMapper.toDTO(user);
+    }
+
+    public UserDTO updateUser(Long id, UserDTO updatedData) {
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id + " not found"));
+
+        if (!user.getEmail().equals(updatedData.getEmail())) {
+            Optional<User> userWithSameEmail = userRepository.findByEmail(updatedData.getEmail());
+
+            if (userWithSameEmail.isPresent()) {
+                throw new DuplicateEmailException("Email " + updatedData.getEmail() + " is already in use by another user");
+            }
+        }
+
+        user.setFirstName(updatedData.getFirstName().toUpperCase());
+        user.setLastName(updatedData.getLastName().toUpperCase());
+        user.setEmail(updatedData.getEmail());
+
+        User updateduser = userRepository.save(user);
+
+        return userMapper.toDTO(updateduser);
     }
 }
