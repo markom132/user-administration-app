@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class UserChangeLogDTO {
 
-    private Long id;
     private Long userId;
     private String fieldName;
     private String oldValue;

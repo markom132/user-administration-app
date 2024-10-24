@@ -78,6 +78,8 @@
     <form id="activateAccountForm">
         <input type="hidden" th:value="${activationToken}" name="activationToken" id="activationToken" />
         <input type="hidden" th:value="${email}" name="email" id="email" />
+        <input type="hidden" th:value="${jwtToken}" name="jwtToken" id="jwtToken">
+
         <div>
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" required />
@@ -127,6 +129,7 @@
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
             const passwordConfirmation = document.getElementById("passwordConfirmation").value;
+            const jwtToken = document.getElementById("jwtToken").value;
 
             const requestBody = {
                 activateAccountToken: token,
@@ -138,7 +141,8 @@
             fetch("/api/auth/activate-account", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${jwtToken}`
                 },
                 body: JSON.stringify(requestBody)
             })

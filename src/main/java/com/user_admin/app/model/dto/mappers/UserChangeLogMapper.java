@@ -3,8 +3,12 @@ package com.user_admin.app.model.dto.mappers;
 import com.user_admin.app.model.User;
 import com.user_admin.app.model.UserChangeLog;
 import com.user_admin.app.model.dto.UserChangeLogDTO;
+import com.user_admin.app.model.dto.UserDTO;
 import com.user_admin.app.repository.UserRepository;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class UserChangeLogMapper {
@@ -20,7 +24,6 @@ public class UserChangeLogMapper {
             return null;
         }
         return new UserChangeLogDTO(
-                userChangeLog.getId(),
                 userChangeLog.getUser() != null ? userChangeLog.getUser().getId() : null,
                 userChangeLog.getFieldName(),
                 userChangeLog.getOldValue(),
@@ -29,6 +32,12 @@ public class UserChangeLogMapper {
                 userChangeLog.getChangedByFirstName(),
                 userChangeLog.getChangedByFirstName()
         );
+    }
+
+    public List<UserChangeLogDTO> toDtoList(List<UserChangeLog> userChangeLogs) {
+        return userChangeLogs.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     public UserChangeLog toEntity(UserChangeLogDTO userChangeLogDTO) {
@@ -40,7 +49,6 @@ public class UserChangeLogMapper {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         UserChangeLog userChangeLog = new UserChangeLog();
-        userChangeLog.setId(userChangeLogDTO.getId());
         userChangeLog.setUser(user);
         userChangeLog.setFieldName(userChangeLogDTO.getFieldName());
         userChangeLog.setOldValue(userChangeLogDTO.getOldValue());

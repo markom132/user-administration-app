@@ -1,13 +1,13 @@
 package com.user_admin.app.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.user_admin.app.model.User;
 import com.user_admin.app.model.dto.ActivateAccountDTO;
 import com.user_admin.app.model.dto.LoginRequestDTO;
 import com.user_admin.app.model.dto.ResetPasswordDTO;
 import com.user_admin.app.model.dto.UserDTO;
 import com.user_admin.app.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -64,15 +64,16 @@ public class UserController {
     @PostMapping("/auth/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam @NotBlank(message = "Email cannot be blank")
                                             @Size(min = 3, max = 255, message = "Email must be between 3 and 255 characters")
-                                            @Email(message = "Email should be valid") String email) {
-        userService.forgotPassword(email);
+                                            @Email(message = "Email should be valid") String email,
+                                            HttpServletRequest request) {
+        userService.forgotPassword(email, request);
         return ResponseEntity.ok("Password reset email sent");
     }
 
     @PostMapping("/auth/reset-password")
-    public ResponseEntity<?> resetPassword(@Validated @RequestBody ResetPasswordDTO resetPasswordDTO) {
+    public ResponseEntity<?> resetPassword(@Validated @RequestBody ResetPasswordDTO resetPasswordDTO, HttpServletRequest request) {
         try {
-            userService.validatePasswordResetRequest(resetPasswordDTO);
+            userService.validatePasswordResetRequest(resetPasswordDTO, request);
             return ResponseEntity.ok("Password reset successfully. You can login with your new password now");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -80,9 +81,9 @@ public class UserController {
     }
 
     @PostMapping("/auth/activate-account")
-    public ResponseEntity<?> activateAccount(@Validated @RequestBody ActivateAccountDTO activateAccountDTO) {
+    public ResponseEntity<?> activateAccount(@Validated @RequestBody ActivateAccountDTO activateAccountDTO, HttpServletRequest request) {
         try {
-            userService.validateActivateAccountRequest(activateAccountDTO);
+            userService.validateActivateAccountRequest(activateAccountDTO, request);
             return ResponseEntity.ok("Account is activated, you can log in now.");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -100,11 +101,12 @@ public class UserController {
 
     @PostMapping("/users")
     @JsonView(UserDTO.BasicInfo.class)
-    public ResponseEntity<Map<String, Object>> createUser(@Validated @RequestBody UserDTO userDTO) {
+    public ResponseEntity<Map<String, Object>> createUser(@Validated @RequestBody UserDTO userDTO,
+                                                          HttpServletRequest request) {
         Map<String, Object> response = new HashMap<>();
         try {
             response.put("message", "Successfully created user " + userDTO.getFirstName().toUpperCase() + " " + userDTO.getLastName().toUpperCase());
-            response.put("user", userService.createUser(userDTO));
+            response.put("user", userService.createUser(userDTO, request));
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
             response.put("message", "Error creating user");
@@ -123,11 +125,11 @@ public class UserController {
 
     @PutMapping("/users/{id}")
     public ResponseEntity<Map<String, Object>> updateUser(@PathVariable Long id,
-                                                          @Validated @RequestBody UserDTO userDTO) {
+                                                          @Validated @RequestBody UserDTO userDTO, HttpServletRequest request) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            UserDTO updatedUser = userService.updateUser(id, userDTO);
+            UserDTO updatedUser = userService.updateUser(id, userDTO, request);
 
             response.put("message", "Successfully updated user " + userDTO.getFirstName().toUpperCase() + " " + userDTO.getLastName().toUpperCase());
             response.put("user", updatedUser);
@@ -142,9 +144,10 @@ public class UserController {
     }
 
     @PostMapping("/users/{id}/resend-account-activation-email")
-    public ResponseEntity<String> resendActivationEmail(@PathVariable Long id) {
+    public ResponseEntity<String> resendActivationEmail(@PathVariable Long id,
+                                                        HttpServletRequest request) {
         try {
-            userService.resendActivationEmail(id);
+            userService.resendActivationEmail(id, request);
             return ResponseEntity.status(HttpStatus.OK).body("Email send successfully");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
@@ -152,9 +155,9 @@ public class UserController {
     }
 
     @PostMapping("/users/{id}/set-account-state")
-    public ResponseEntity<String> setState(@PathVariable Long id) {
+    public ResponseEntity<String> setState(@PathVariable Long id, HttpServletRequest request) {
         try {
-            userService.changeUserStatus(id);
+            userService.changeUserStatus(id, request);
             return ResponseEntity.status(HttpStatus.OK).body("Account status changed successfully");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());

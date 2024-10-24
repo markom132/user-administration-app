@@ -3,16 +3,14 @@ package com.user_admin.app.service;
 import com.user_admin.app.config.JwtUtil;
 import com.user_admin.app.exceptions.DuplicateEmailException;
 import com.user_admin.app.exceptions.ResourceNotFoundException;
-import com.user_admin.app.model.AuthToken;
-import com.user_admin.app.model.PasswordResetToken;
-import com.user_admin.app.model.User;
-import com.user_admin.app.model.UserStatus;
+import com.user_admin.app.model.*;
 import com.user_admin.app.model.dto.ActivateAccountDTO;
 import com.user_admin.app.model.dto.LoginRequestDTO;
 import com.user_admin.app.model.dto.ResetPasswordDTO;
 import com.user_admin.app.model.dto.UserDTO;
 import com.user_admin.app.model.dto.mappers.UserMapper;
 import com.user_admin.app.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -37,8 +35,9 @@ public class UserService {
     private final PasswordResetTokenService passwordResetTokenService;
     private final EmailService emailService;
     private final UserMapper userMapper;
+    private final UserChangeLogService userChangeLogService;
 
-    public UserService(UserRepository userRepository, JwtUtil jwtUtil, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, AuthTokenService authTokenService, EmailService emailService, PasswordResetTokenService passwordResetTokenService, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, JwtUtil jwtUtil, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, AuthTokenService authTokenService, EmailService emailService, PasswordResetTokenService passwordResetTokenService, UserMapper userMapper, UserChangeLogService userChangeLogService) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.authenticationManager = authenticationManager;
@@ -47,6 +46,7 @@ public class UserService {
         this.emailService = emailService;
         this.passwordResetTokenService = passwordResetTokenService;
         this.userMapper = userMapper;
+        this.userChangeLogService = userChangeLogService;
     }
 
     public Map<String, Object> login(LoginRequestDTO loginRequest) {
@@ -97,7 +97,7 @@ public class UserService {
     }
 
     @Transactional
-    public void forgotPassword(String email) {
+    public void forgotPassword(String email, HttpServletRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
 
@@ -110,12 +110,15 @@ public class UserService {
 
         passwordResetTokenService.createPasswordResetToken(hashedToken, user);
 
-        String resetLink = "http://localhost:8080/api/reset-password/" + resetToken + "/" + email;
+        String authorizationHeader = request.getHeader("Authorization");
+        String jwtToken = authorizationHeader.substring(7);
+
+        String resetLink = "http://localhost:8080/api/reset-password/" + resetToken + "/" + email + "/" + jwtToken;
 
         emailService.sendResetPasswordEmail(email, resetLink);
     }
 
-    public void validatePasswordResetRequest(ResetPasswordDTO resetPasswordDTO) {
+    public void validatePasswordResetRequest(ResetPasswordDTO resetPasswordDTO, HttpServletRequest request) {
         if (!resetPasswordDTO.getNewPassword().equals(resetPasswordDTO.getConfirmationPassword())) {
             throw new RuntimeException("New password and confirmation password don't match");
         }
@@ -152,16 +155,24 @@ public class UserService {
             throw new RuntimeException("Reset token is expired");
         }
 
-        updatePassword(email, resetPasswordDTO.getNewPassword());
+        updatePassword(email, resetPasswordDTO.getNewPassword(), request);
         passwordResetTokenService.deleteToken(validToken);
     }
 
-    public void updatePassword(String email, String newPassword) {
+    public void updatePassword(String email, String newPassword, HttpServletRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
 
-        user.setPassword(passwordEncoder.encode(newPassword));
+        String encodedNewPassword = passwordEncoder.encode(newPassword);
+        String oldPassword = user.getPassword();
+
+        user.setPassword(encodedNewPassword);
         userRepository.save(user);
+
+        if (!passwordEncoder.matches(oldPassword, encodedNewPassword)) {
+            UserChangeLog changeLog = userChangeLogService.fillUserChangeLogDTO("password", oldPassword, encodedNewPassword);
+            userChangeLogService.logChange(changeLog, user, request);
+        }
     }
 
     public boolean isValidPassword(String password) {
@@ -169,7 +180,7 @@ public class UserService {
         return password.matches(passwordRegex);
     }
 
-    public void validateActivateAccountRequest(ActivateAccountDTO activateAccountDTO) {
+    public void validateActivateAccountRequest(ActivateAccountDTO activateAccountDTO, HttpServletRequest request) {
         User user = userRepository.findByEmail(activateAccountDTO.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + activateAccountDTO.getEmail()));
 
@@ -187,10 +198,15 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(activateAccountDTO.getPassword()));
 
-        activateAccount(user, activateAccountDTO.getActivateAccountToken());
+
+        UserChangeLog changeLog = userChangeLogService.fillUserChangeLogDTO("password", null, user.getPassword());
+        userChangeLogService.logChange(changeLog, user, request);
+
+
+        activateAccount(user, activateAccountDTO.getActivateAccountToken(), request);
     }
 
-    public void activateAccount(User user, String activateAccountToken) {
+    public void activateAccount(User user, String activateAccountToken, HttpServletRequest request) {
         List<PasswordResetToken> passwordResetTokens = passwordResetTokenService.findAllByUserEmail(user.getEmail());
 
         List<PasswordResetToken> activateAccountTokens = passwordResetTokens.stream().filter(token -> token.getActivateAccountToken() != null).collect(Collectors.toList());
@@ -209,6 +225,10 @@ public class UserService {
 
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
+
+        UserChangeLog changeLog = userChangeLogService.fillUserChangeLogDTO("status", String.valueOf(UserStatus.INACTIVE), String.valueOf(UserStatus.ACTIVE));
+        userChangeLogService.logChange(changeLog, user, request);
+
 
         passwordResetTokenService.deleteToken(latestToken);
     }
@@ -236,7 +256,7 @@ public class UserService {
         }
     }
 
-    public UserDTO createUser(UserDTO userDTO) {
+    public UserDTO createUser(UserDTO userDTO, HttpServletRequest request) {
         String email = userDTO.getEmail();
 
         validateCreateUserRequest(email);
@@ -251,7 +271,10 @@ public class UserService {
 
         passwordResetTokenService.createActivateAccountToken(hashedToken, newUser);
 
-        String activateLink = "http://localhost:8080/api/activate-account/" + activateToken + "/" + email;
+        String authorizationHeader = request.getHeader("Authorization");
+        String jwtToken = authorizationHeader.substring(7);
+
+        String activateLink = createLink(activateToken, email, jwtToken);
 
         emailService.sendActivateAccountEmail(email, activateLink);
         return userMapper.toDTO(newUser);
@@ -263,7 +286,12 @@ public class UserService {
         return userMapper.toDTO(user);
     }
 
-    public UserDTO updateUser(Long id, UserDTO updatedData) {
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+    }
+
+    public UserDTO updateUser(Long id, UserDTO updatedData, HttpServletRequest request) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id + " not found"));
 
         if (!user.getEmail().equals(updatedData.getEmail())) {
@@ -272,6 +300,19 @@ public class UserService {
             if (userWithSameEmail.isPresent()) {
                 throw new DuplicateEmailException("Email " + updatedData.getEmail() + " is already in use by another user");
             }
+        }
+
+        if (!user.getFirstName().equals(updatedData.getFirstName().toUpperCase())) {
+            UserChangeLog changeLog = userChangeLogService.fillUserChangeLogDTO("firstName", user.getFirstName(), updatedData.getFirstName().toUpperCase());
+            userChangeLogService.logChange(changeLog, user, request);
+        } else if (!user.getLastName().equals(updatedData.getLastName().toUpperCase())) {
+            UserChangeLog changeLog = userChangeLogService.fillUserChangeLogDTO("lastName", user.getLastName(), updatedData.getLastName().toUpperCase());
+            userChangeLogService.logChange(changeLog, user, request);
+
+        } else if (!user.getEmail().equals(updatedData.getEmail())) {
+            UserChangeLog changeLog = userChangeLogService.fillUserChangeLogDTO("email", user.getEmail(), updatedData.getEmail());
+            userChangeLogService.logChange(changeLog, user, request);
+
         }
 
         user.setFirstName(updatedData.getFirstName().toUpperCase());
@@ -283,7 +324,7 @@ public class UserService {
         return userMapper.toDTO(updateduser);
     }
 
-    public void resendActivationEmail(Long id) {
+    public void resendActivationEmail(Long id, HttpServletRequest request) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id + " not found"));
 
         if (user.getStatus() == UserStatus.ACTIVE) {
@@ -301,20 +342,32 @@ public class UserService {
 
         passwordResetTokenService.createPasswordResetToken(hashedToken, user);
 
-        String activateLink = "http://localhost:8080/api/activate-account/" + newActivateToken + "/" + user.getEmail();
+        String authorizationHeader = request.getHeader("Authorization");
+        String jwtToken = authorizationHeader.substring(7);
+
+        String activateLink = createLink(newActivateToken, user.getEmail(), jwtToken);
 
         emailService.sendActivateAccountEmail(user.getEmail(), activateLink);
     }
 
-    public void changeUserStatus(Long id) {
+    public void changeUserStatus(Long id, HttpServletRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id + " not found"));
+        UserChangeLog changeLog = new UserChangeLog();
 
         if (user.getStatus().equals(UserStatus.ACTIVE)) {
             user.setStatus(UserStatus.INACTIVE);
+            userChangeLogService.fillUserChangeLogDTO("status", String.valueOf(UserStatus.ACTIVE), String.valueOf(UserStatus.INACTIVE));
         } else {
             user.setStatus(UserStatus.ACTIVE);
+            userChangeLogService.fillUserChangeLogDTO("status", String.valueOf(UserStatus.INACTIVE), String.valueOf(UserStatus.ACTIVE));
         }
+
+        userChangeLogService.logChange(changeLog, user, request);
         userRepository.save(user);
+    }
+
+    public String createLink(String token, String email, String jwtToken) {
+        return "http://localhost:8080/api/activate-account/" + token + "/" + email + "/" + jwtToken;
     }
 }

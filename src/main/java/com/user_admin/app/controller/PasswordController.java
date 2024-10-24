@@ -10,17 +10,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/api")
 public class PasswordController {
 
-    @GetMapping("/reset-password/{token}/{email}")
-    public String showResetPasswordPage(@PathVariable String token, @PathVariable String email, Model model) {
+    @GetMapping("/reset-password/{token}/{email}/{jwtToken}")
+    public String showResetPasswordPage(@PathVariable String token,
+                                        @PathVariable String email,
+                                        @PathVariable String jwtToken,
+                                        Model model) {
         model.addAttribute("token", token);
         model.addAttribute("email", email);
+        model.addAttribute("jwtToken", jwtToken);
+
         return "reset_password";
     }
 
-    @GetMapping("/activate-account/{activationToken}/{email}")
-    public String showActivateAccountPage(@PathVariable String activationToken, @PathVariable String email, Model model) {
+    @GetMapping("/activate-account/{activationToken}/{email}/{jwtToken}")
+    public String showActivateAccountPage(@PathVariable String activationToken,
+                                          @PathVariable String email,
+                                          @PathVariable String jwtToken,
+                                          Model model) {
         model.addAttribute("activationToken", activationToken);
         model.addAttribute("email", email);
+        model.addAttribute("jwtToken", jwtToken);
+
         return "activate_account";
     }
 }

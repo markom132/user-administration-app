@@ -9,6 +9,6 @@ import java.util.Optional;
 
 @Repository
 public interface UserChangeLogRepository extends JpaRepository<UserChangeLog, Long> {
-    Optional<UserChangeLog> findByUserId(Long userId);
+    Optional<List<UserChangeLog>> findByUserId(Long userId);
     List<UserChangeLog> findByChangedByLastName(String lastName);
 }

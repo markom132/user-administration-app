@@ -27,13 +27,13 @@ public class PasswordResetTokenService {
         passwordResetTokenRepository.delete(token);
     }
 
-    public void createPasswordResetToken(String hashedToken, User newUser) {
+    public void createPasswordResetToken(String hashedToken, User user) {
         try {
             LocalDateTime expiresAt = LocalDateTime.now().plusHours(1);
 
             PasswordResetToken passwordResetToken = new PasswordResetToken();
             passwordResetToken.setToken(hashedToken);
-            passwordResetToken.setUser(newUser);
+            passwordResetToken.setUser(user);
             passwordResetToken.setCreatedAt(LocalDateTime.now());
             passwordResetToken.setExpiresAt(expiresAt);
 
