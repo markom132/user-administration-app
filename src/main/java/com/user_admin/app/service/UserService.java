@@ -305,4 +305,16 @@ public class UserService {
 
         emailService.sendActivateAccountEmail(user.getEmail(), activateLink);
     }
+
+    public void changeUserStatus(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id + " not found"));
+
+        if (user.getStatus().equals(UserStatus.ACTIVE)) {
+            user.setStatus(UserStatus.INACTIVE);
+        } else {
+            user.setStatus(UserStatus.ACTIVE);
+        }
+        userRepository.save(user);
+    }
 }

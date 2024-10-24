@@ -151,4 +151,14 @@ public class UserController {
         }
     }
 
+    @PostMapping("/users/{id}/set-account-state")
+    public ResponseEntity<String> setState(@PathVariable Long id) {
+        try {
+            userService.changeUserStatus(id);
+            return ResponseEntity.status(HttpStatus.OK).body("Account status changed successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
 }
