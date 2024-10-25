@@ -15,7 +15,7 @@ public class UserChangeLogDTO {
     private String fieldName;
     private String oldValue;
     private String newValue;
-    private LocalDateTime changedAt;
+    private String changedAt;
     private String changedByFirstName;
     private String changedByLastName;
 

@@ -7,6 +7,8 @@ import com.user_admin.app.model.dto.UserDTO;
 import com.user_admin.app.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,12 +25,15 @@ public class UserChangeLogMapper {
         if (userChangeLog == null) {
             return null;
         }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedChangedAt = userChangeLog.getChangedAt().format(formatter);
+
         return new UserChangeLogDTO(
                 userChangeLog.getUser() != null ? userChangeLog.getUser().getId() : null,
                 userChangeLog.getFieldName(),
                 userChangeLog.getOldValue(),
                 userChangeLog.getNewValue(),
-                userChangeLog.getChangedAt(),
+                formattedChangedAt,
                 userChangeLog.getChangedByFirstName(),
                 userChangeLog.getChangedByFirstName()
         );
@@ -53,7 +58,7 @@ public class UserChangeLogMapper {
         userChangeLog.setFieldName(userChangeLogDTO.getFieldName());
         userChangeLog.setOldValue(userChangeLogDTO.getOldValue());
         userChangeLog.setNewValue(userChangeLogDTO.getNewValue());
-        userChangeLog.setChangedAt(userChangeLogDTO.getChangedAt());
+        userChangeLog.setChangedAt(LocalDateTime.parse(userChangeLogDTO.getChangedAt()));
         userChangeLog.setChangedByFirstName(userChangeLog.getChangedByFirstName());
         userChangeLog.setChangedByLastName(userChangeLog.getChangedByLastName());
 
