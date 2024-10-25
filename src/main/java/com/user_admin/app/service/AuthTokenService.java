@@ -6,10 +6,12 @@ import com.user_admin.app.exceptions.ResourceNotFoundException;
 import com.user_admin.app.model.AuthToken;
 import com.user_admin.app.model.User;
 import com.user_admin.app.repository.AuthTokenRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class AuthTokenService {
@@ -50,6 +52,19 @@ public class AuthTokenService {
         } catch (ResourceNotFoundException e) {
             throw new ResourceNotFoundException("Token not found" + e);
         }
+    }
+
+    public String getSessionTimeout(HttpServletRequest request) {
+        String authorizationHeader = request.getHeader("Authorization");
+        String token = authorizationHeader.substring(7);
+
+        AuthToken authToken = findByToken(token);
+        LocalDateTime createdAt = authToken.getCreatedAt();
+        LocalDateTime now = LocalDateTime.now();
+
+        Long minutesPassed = ChronoUnit.MINUTES.between(createdAt, now);
+
+        return "The session is active " + minutesPassed + " minutes";
     }
 
 }

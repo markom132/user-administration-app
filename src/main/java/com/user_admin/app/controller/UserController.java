@@ -7,7 +7,6 @@ import com.user_admin.app.model.dto.ResetPasswordDTO;
 import com.user_admin.app.model.dto.UserDTO;
 import com.user_admin.app.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
