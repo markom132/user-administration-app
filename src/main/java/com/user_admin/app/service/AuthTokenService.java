@@ -67,4 +67,15 @@ public class AuthTokenService {
         return "The session is active " + minutesPassed + " minutes";
     }
 
+    public void updateSessionTimeout(Integer sessionTimeout, HttpServletRequest httpRequest) {
+        String authorizationHeader = httpRequest.getHeader("Authorization");
+        String token = authorizationHeader.substring(7);
+
+        AuthToken authToken = findByToken(token);
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(sessionTimeout);
+        authToken.setExpiresAt(expiresAt);
+
+        authTokenRepository.save(authToken);
+    }
+
 }
