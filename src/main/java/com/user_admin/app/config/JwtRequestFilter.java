@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -27,6 +28,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
     private final AuthTokenRepository authTokenRepository;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+
 
     @Autowired
     public JwtRequestFilter(UserDetailsService userDetailsService, JwtUtil jwtUtil, AuthTokenRepository authTokenRepository) {
@@ -39,38 +42,49 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         final String authorizationHeader = request.getHeader("Authorization");
 
+        String requestURI = request.getRequestURI();
+        if (requestURI.equals("/api/auth/login") || pathMatcher.match("/api/reset-password/{token}/{email}/{jwtToken}", requestURI) || pathMatcher.match("/api/activate-account/{activationToken}/{email}/{jwtToken}", requestURI)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("JWT token is missing or invalid");
+            return;
+        }
+
         String email = null;
         String jwtToken = null;
 
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwtToken = authorizationHeader.substring(7);
-            try {
-                email = jwtUtil.extractUsername(jwtToken);
-            } catch (ExpiredJwtException e) {
-                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                response.getWriter().write(e.getMessage());
-                return;
-            } catch (SignatureException e) {
-                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                response.getWriter().write(e.getMessage());
-                return;
-            } catch (MalformedJwtException e) {
-                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                response.getWriter().write(e.getMessage());
-                return;
-            }
+        jwtToken = authorizationHeader.substring(7);
+        try {
+            email = jwtUtil.extractUsername(jwtToken);
+        } catch (ExpiredJwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(e.getMessage());
+            return;
+        } catch (SignatureException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(e.getMessage());
+            return;
+        } catch (MalformedJwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(e.getMessage());
+            return;
         }
+
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
 
             if (jwtUtil.validateToken(jwtToken, userDetails)) {
                 AuthToken authToken = authTokenRepository.findByToken(jwtToken)
-                        .orElseThrow(() -> new RuntimeException("Auth token not found"));
+                        .orElseThrow(() -> new RuntimeException("JWT token not found"));
 
                 if (authToken.getExpiresAt().isBefore(LocalDateTime.now())) {
                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    response.getWriter().write("Token has expired");
+                    response.getWriter().write("JWT token has expired");
                     return;
                 }
 

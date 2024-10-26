@@ -301,16 +301,17 @@ public class UserService {
                 throw new DuplicateEmailException("Email " + updatedData.getEmail() + " is already in use by another user");
             }
         }
+        UserChangeLog changeLog = new UserChangeLog();
 
         if (!user.getFirstName().equals(updatedData.getFirstName().toUpperCase())) {
-            UserChangeLog changeLog = userChangeLogService.fillUserChangeLogDTO("firstName", user.getFirstName(), updatedData.getFirstName().toUpperCase());
+            changeLog = userChangeLogService.fillUserChangeLogDTO("firstName", user.getFirstName(), updatedData.getFirstName().toUpperCase());
             userChangeLogService.logChange(changeLog, user, request);
         } else if (!user.getLastName().equals(updatedData.getLastName().toUpperCase())) {
-            UserChangeLog changeLog = userChangeLogService.fillUserChangeLogDTO("lastName", user.getLastName(), updatedData.getLastName().toUpperCase());
+            changeLog = userChangeLogService.fillUserChangeLogDTO("lastName", user.getLastName(), updatedData.getLastName().toUpperCase());
             userChangeLogService.logChange(changeLog, user, request);
 
         } else if (!user.getEmail().equals(updatedData.getEmail())) {
-            UserChangeLog changeLog = userChangeLogService.fillUserChangeLogDTO("email", user.getEmail(), updatedData.getEmail());
+            changeLog = userChangeLogService.fillUserChangeLogDTO("email", user.getEmail(), updatedData.getEmail());
             userChangeLogService.logChange(changeLog, user, request);
 
         }
@@ -340,7 +341,7 @@ public class UserService {
         String newActivateToken = KeyGenerators.string().generateKey();
         String hashedToken = passwordEncoder.encode(newActivateToken);
 
-        passwordResetTokenService.createPasswordResetToken(hashedToken, user);
+        passwordResetTokenService.createActivateAccountToken(hashedToken, user);
 
         String authorizationHeader = request.getHeader("Authorization");
         String jwtToken = authorizationHeader.substring(7);
@@ -353,14 +354,15 @@ public class UserService {
     public void changeUserStatus(Long id, HttpServletRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id + " not found"));
+
         UserChangeLog changeLog = new UserChangeLog();
 
         if (user.getStatus().equals(UserStatus.ACTIVE)) {
             user.setStatus(UserStatus.INACTIVE);
-            userChangeLogService.fillUserChangeLogDTO("status", String.valueOf(UserStatus.ACTIVE), String.valueOf(UserStatus.INACTIVE));
+            changeLog = userChangeLogService.fillUserChangeLogDTO("status", String.valueOf(UserStatus.ACTIVE), String.valueOf(UserStatus.INACTIVE));
         } else {
             user.setStatus(UserStatus.ACTIVE);
-            userChangeLogService.fillUserChangeLogDTO("status", String.valueOf(UserStatus.INACTIVE), String.valueOf(UserStatus.ACTIVE));
+            changeLog = userChangeLogService.fillUserChangeLogDTO("status", String.valueOf(UserStatus.INACTIVE), String.valueOf(UserStatus.ACTIVE));
         }
 
         userChangeLogService.logChange(changeLog, user, request);
