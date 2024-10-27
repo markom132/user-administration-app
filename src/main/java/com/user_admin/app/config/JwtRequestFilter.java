@@ -21,6 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -79,22 +80,28 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
 
             if (jwtUtil.validateToken(jwtToken, userDetails)) {
-                AuthToken authToken = authTokenRepository.findByToken(jwtToken)
-                        .orElseThrow(() -> new RuntimeException("JWT token not found"));
-
-                if (authToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+                Optional<AuthToken> authTokenOptional = authTokenRepository.findByToken(jwtToken);
+                if (authTokenOptional.isEmpty()) {
                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    response.getWriter().write("JWT token has expired");
+                    response.getWriter().write("JWT token not found");
                     return;
+                } else {
+                    AuthToken authToken = authTokenOptional.get();
+
+                    if (authToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+                        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                        response.getWriter().write("JWT token has expired");
+                        return;
+                    }
+
+                    UsernamePasswordAuthenticationToken authenticationToken =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+                    authToken.setLastUsedAt(LocalDateTime.now());
+                    authTokenRepository.save(authToken);
                 }
-
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-
-                authToken.setLastUsedAt(LocalDateTime.now());
-                authTokenRepository.save(authToken);
             }
         }
         filterChain.doFilter(request, response);
