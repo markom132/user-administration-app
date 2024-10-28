@@ -8,22 +8,30 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface RequestResponseLogRepository extends JpaRepository<RequestResponseLog, Long> {
     List<RequestResponseLog> findByMethod(String method);
+
     List<RequestResponseLog> findByEndpoint(String endpoint);
+
     List<RequestResponseLog> findByTimestampBetween(LocalDateTime start, LocalDateTime end);
+
     List<RequestResponseLog> findByStatusCode(int statusCode);
+
+    List<RequestResponseLog> findByEndpointAndMethod(String endpoint, String method);
+
 
     RequestResponseLog findTopByEndpointAndMethodOrderByTimestampDesc(String endpoint, String method);
 
     @Query("SELECT r FROM RequestResponseLog r " +
-            "WHERE (:endpoint IS NULL OR r.endpoint = :endpoint) " +
-            "AND (:method IS NULL OR r.method = :method) " +
+            "WHERE (:endpoint IS NULL OR r.endpoint LIKE %:endpoint%) " +
+            "AND (:method IS NULL OR r.method LIKE %:method%) " +
             "AND (:statusCode IS NULL OR r.statusCode = :statusCode)")
-    List<RequestResponseLog> findByCriteria(
-            @Param("endpoint") String endpoint,
-            @Param("method") String method,
-            @Param("statusCode") Integer statusCode);
+    Optional<List<RequestResponseLog>> findByCriteria(
+            String endpoint,
+            String method,
+            Integer statusCode);
+
 }

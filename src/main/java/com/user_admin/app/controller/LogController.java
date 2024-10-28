@@ -1,6 +1,7 @@
 package com.user_admin.app.controller;
 
 import com.user_admin.app.model.RequestResponseLog;
+import com.user_admin.app.model.dto.RequestResponseLogDTO;
 import com.user_admin.app.service.LogService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,17 +23,17 @@ public class LogController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RequestResponseLog>> getAllLogs() {
+    public ResponseEntity<List<RequestResponseLogDTO>> getAllLogs() {
         return ResponseEntity.status(HttpStatus.OK).body(logService.getAllLogs());
     }
 
     @GetMapping("/filter")
-    public ResponseEntity<List<RequestResponseLog>> getLogsByCriteria(
-            @RequestParam(required = false) String endpoint,
-            @RequestParam(required = false) String method,
-            @RequestParam(required = false) Integer statusCode) {
+    public ResponseEntity<List<RequestResponseLogDTO>> getLogsByCriteria(
+            @RequestParam(required = false, defaultValue = "") String endpoint,
+            @RequestParam(required = false, defaultValue = "") String method,
+            @RequestParam(required = false, defaultValue = "") Integer statusCode) {
 
-        List<RequestResponseLog> logs = logService.findByCriteria(endpoint, method, statusCode);
+        List<RequestResponseLogDTO> logs = logService.findByCriteria(endpoint, method, statusCode);
         return ResponseEntity.status(HttpStatus.OK).body(logs);
     }
 
