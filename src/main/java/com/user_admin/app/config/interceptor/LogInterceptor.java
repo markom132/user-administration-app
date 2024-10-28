@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Component
@@ -44,13 +45,17 @@ public class LogInterceptor implements HandlerInterceptor {
 
         if (responseWrapper != null) {
             String responseBody = new String(responseWrapper.getCachedContent());
-            System.out.println("Captured Response Body: " + responseBody);
 
             RequestResponseLog log = requestResponseLogRepository.findTopByEndpointAndMethodOrderByTimestampDesc(request.getRequestURI(), request.getMethod());
 
             if (log != null) {
+                LocalDateTime requestTimestamp = log.getTimestamp();
+                LocalDateTime responseTimestamp = LocalDateTime.now();
+                Long executionTime = Duration.between(requestTimestamp, responseTimestamp).toMillis();
+
                 log.setStatusCode(response.getStatus());
-                log.setResponseTimestamp(LocalDateTime.now());
+                log.setResponseTimestamp(responseTimestamp);
+                log.setExecutionTime(executionTime);
                 log.setResponseBody(responseBody);
 
                 try {
