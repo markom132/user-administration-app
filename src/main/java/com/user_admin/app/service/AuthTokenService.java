@@ -1,6 +1,6 @@
 package com.user_admin.app.service;
 
-import com.user_admin.app.config.JwtUtil;
+import com.user_admin.app.config.jwt.JwtUtil;
 import com.user_admin.app.exceptions.DatabaseException;
 import com.user_admin.app.exceptions.ResourceNotFoundException;
 import com.user_admin.app.model.AuthToken;
@@ -77,5 +77,4 @@ public class AuthTokenService {
 
         authTokenRepository.save(authToken);
     }
-
 }

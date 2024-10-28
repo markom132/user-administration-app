@@ -1,4 +1,4 @@
-package com.user_admin.app.config;
+package com.user_admin.app.config.jwt;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

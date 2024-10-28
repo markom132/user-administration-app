@@ -11,9 +11,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class RequestResponseLogDTO {
 
-    private Long id;
     private String method;
-    private String url;
+    private String endpoint;
     private String requestBody;
     private String responseBody;
     private int statusCode;

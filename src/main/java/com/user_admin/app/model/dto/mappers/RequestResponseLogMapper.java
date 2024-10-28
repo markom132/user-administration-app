@@ -13,9 +13,8 @@ public class RequestResponseLogMapper {
         }
 
         return new RequestResponseLogDTO(
-                requestResponseLog.getId(),
                 requestResponseLog.getMethod(),
-                requestResponseLog.getUrl(),
+                requestResponseLog.getEndpoint(),
                 requestResponseLog.getRequestBody(),
                 requestResponseLog.getResponseBody(),
                 requestResponseLog.getStatusCode(),
@@ -30,9 +29,8 @@ public class RequestResponseLogMapper {
         }
 
         RequestResponseLog requestResponseLog = new RequestResponseLog();
-        requestResponseLog.setId(requestResponseLogDTO.getId());
         requestResponseLog.setMethod(requestResponseLogDTO.getMethod());
-        requestResponseLog.setUrl(requestResponseLogDTO.getUrl());
+        requestResponseLog.setEndpoint(requestResponseLogDTO.getEndpoint());
         requestResponseLog.setRequestBody(requestResponseLogDTO.getRequestBody());
         requestResponseLog.setResponseBody(requestResponseLogDTO.getResponseBody());
         requestResponseLog.setStatusCode(requestResponseLogDTO.getStatusCode());
@@ -41,5 +39,4 @@ public class RequestResponseLogMapper {
 
         return requestResponseLog;
     }
-
 }

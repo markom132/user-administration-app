@@ -1,4 +1,4 @@
-package com.user_admin.app.config;
+package com.user_admin.app.config.jwt;
 
 import com.user_admin.app.model.User;
 import io.jsonwebtoken.Claims;

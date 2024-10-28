@@ -1,9 +1,6 @@
 package com.user_admin.app.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,15 +19,18 @@ public class RequestResponseLog {
 
     private String method;
 
-    private String url;
+    private String endpoint;
 
     private String requestBody;
 
+    @Column(length = 500)
     private String responseBody;
 
     private int statusCode;
 
     private LocalDateTime timestamp;
+
+    private LocalDateTime responseTimestamp;
 
     private Long executionTime;
 }

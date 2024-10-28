@@ -1,6 +1,6 @@
 package com.user_admin.app.service;
 
-import com.user_admin.app.config.JwtUtil;
+import com.user_admin.app.config.jwt.JwtUtil;
 import com.user_admin.app.exceptions.ResourceNotFoundException;
 import com.user_admin.app.model.User;
 import com.user_admin.app.model.UserChangeLog;
@@ -9,7 +9,6 @@ import com.user_admin.app.model.dto.mappers.UserChangeLogMapper;
 import com.user_admin.app.repository.UserChangeLogRepository;
 import com.user_admin.app.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
