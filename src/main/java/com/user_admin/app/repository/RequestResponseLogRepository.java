@@ -12,16 +12,8 @@ import java.util.Optional;
 
 @Repository
 public interface RequestResponseLogRepository extends JpaRepository<RequestResponseLog, Long> {
-    List<RequestResponseLog> findByMethod(String method);
-
-    List<RequestResponseLog> findByEndpoint(String endpoint);
 
     List<RequestResponseLog> findByTimestampBetween(LocalDateTime start, LocalDateTime end);
-
-    List<RequestResponseLog> findByStatusCode(int statusCode);
-
-    List<RequestResponseLog> findByEndpointAndMethod(String endpoint, String method);
-
 
     RequestResponseLog findTopByEndpointAndMethodOrderByTimestampDesc(String endpoint, String method);
 

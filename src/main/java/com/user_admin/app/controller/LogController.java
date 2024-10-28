@@ -37,4 +37,9 @@ public class LogController {
         return ResponseEntity.status(HttpStatus.OK).body(logs);
     }
 
+    @GetMapping("/filter/between")
+    public ResponseEntity<List<RequestResponseLogDTO>> getLogsByTimestamp(@RequestParam String start, @RequestParam String end) {
+        List<RequestResponseLogDTO> logs = logService.getLogsByTimestamp(start, end);
+        return ResponseEntity.status(HttpStatus.OK).body(logs);
+    }
 }
