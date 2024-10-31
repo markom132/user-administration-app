@@ -58,8 +58,6 @@ public class UserController {
         Map<String, Object> response = new HashMap<>();
         try {
             response = userService.login(loginRequest);
-            logger.info("User logged in successfully: {}", loginRequest.getEmail());
-
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
             response.put("message", "Error occurred during login request");
@@ -114,7 +112,6 @@ public class UserController {
                                             HttpServletRequest request) throws MessagingException, IOException {
         try {
             userService.forgotPassword(email, request);
-            logger.info("Password reset email sent to: {}", email);
 
             return ResponseEntity.status(HttpStatus.OK).body("Password reset email sent");
         } catch (RuntimeException e) {
@@ -137,7 +134,6 @@ public class UserController {
     public ResponseEntity<?> resetPassword(@Validated @RequestBody ResetPasswordDTO resetPasswordDTO, HttpServletRequest request) throws MessagingException, IOException {
         try {
             userService.validatePasswordResetRequest(resetPasswordDTO, request);
-            logger.info("Password reset successfully for user: {}", resetPasswordDTO.getEmail());
 
             return ResponseEntity.status(HttpStatus.OK).body("Password reset successfully. You can login with your new password now");
         } catch (RuntimeException e) {
@@ -159,7 +155,6 @@ public class UserController {
     public ResponseEntity<?> activateAccount(@Validated @RequestBody ActivateAccountDTO activateAccountDTO, HttpServletRequest request) throws MessagingException, IOException {
         try {
             userService.validateActivateAccountRequest(activateAccountDTO, request);
-            logger.info("Account activated for user: {}", activateAccountDTO.getEmail());
 
             return ResponseEntity.status(HttpStatus.OK).body("Account is activated, you can log in now.");
         } catch (RuntimeException e) {
@@ -209,7 +204,6 @@ public class UserController {
             response.put("message", "Error creating user");
             response.put("error", e.getMessage());
             emailService.sendError(e, request, Optional.of(objectMapper.convertValue(userDTO, Map.class)));
-            logger.error("Error creating user {}: {}", userDTO.getEmail(), e.getMessage());
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -251,7 +245,6 @@ public class UserController {
 
             response.put("message", "Successfully updated user " + userDTO.getFirstName().toUpperCase() + " " + userDTO.getLastName().toUpperCase());
             response.put("user", updatedUser);
-            logger.info("User updated: {}", userDTO.getEmail());
 
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (RuntimeException e) {
@@ -276,7 +269,6 @@ public class UserController {
                                                         HttpServletRequest request) throws MessagingException, IOException {
         try {
             userService.resendActivationEmail(id, request);
-            logger.info("Activation email resent to user ID: {}", id);
 
             return ResponseEntity.status(HttpStatus.OK).body("Email send successfully");
         } catch (RuntimeException e) {
