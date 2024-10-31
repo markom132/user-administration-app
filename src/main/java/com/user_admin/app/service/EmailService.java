@@ -4,6 +4,8 @@ import com.user_admin.app.model.dto.ErrorDTO;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -19,15 +21,25 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Service class for sending emails related to user account management and error notifications.
+ */
 @Service
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
+    /**
+     * Sends a password reset email to the specific address.
+     *
+     * @param to        the recipient's email address
+     * @param resetLink the link to reset the password
+     */
     public void sendResetPasswordEmail(String to, String resetLink) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -46,13 +58,22 @@ public class EmailService {
             helper.addInline("logoImage", image);
 
             mailSender.send(message);
+            logger.info("Reset password email sent to {}", to);
         } catch (MessagingException e) {
+            logger.error("Failed to send reset password email: {}", e.getMessage());
             throw new RuntimeException("Failed to send reset password email", e);
         } catch (IOException e) {
+            logger.error("I/O error while sending reset password email: {}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Sends an account activation email to the specific address.
+     *
+     * @param to           the recipient's email address
+     * @param activateLink the link to activate the account
+     */
     public void sendActivateAccountEmail(String to, String activateLink) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -71,13 +92,24 @@ public class EmailService {
             helper.addInline("logoImage", image);
 
             mailSender.send(message);
+            logger.info("Account activation email sent to {}", to);
         } catch (MessagingException e) {
+            logger.error("Failed to send activate account email: {}", e.getMessage());
             throw new RuntimeException("Failed to send reset password email", e);
         } catch (IOException e) {
+            logger.error("I/O error while sending activate account email: {}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Sends an error notification email to the specified address.
+     *
+     * @param to       the recipient's email address
+     * @param errorDTO the error information to include in the email
+     * @throws MessagingException if an error occurs while creating email
+     * @throws IOException        if an I/O error occurs while loading the template
+     */
     public void sendErrorEmail(String to, ErrorDTO errorDTO) throws MessagingException, IOException {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -102,13 +134,25 @@ public class EmailService {
             htmlContent = htmlContent.replace("{{entryParamsTable}}", entryParamsTable.toString());
             helper.setText(htmlContent, true);
             mailSender.send(message);
+            logger.info("Error email send to {}", to);
         } catch (MessagingException e) {
+            logger.error("Failed to send error occurred email: {}", e.getMessage());
             throw new RuntimeException("Failed to send error occurred email", e);
         } catch (IOException e) {
+            logger.error("I/O error while sending error occurred email: {}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Sends an error notification email based on the provided error details.
+     *
+     * @param error       the throwable error that occurred
+     * @param request     the HTTP request where the error occurred
+     * @param entryParams optional parameters to include in the email
+     * @throws MessagingException if an error occurs while creating the email
+     * @throws IOException        if an I/O error occurs while loading the template
+     */
     public void sendError(Throwable error, HttpServletRequest request, Optional<Map<String, Object>> entryParams) throws MessagingException, IOException {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String formattedCreatedAt = LocalDateTime.now().format(formatter);
@@ -145,6 +189,13 @@ public class EmailService {
         sendErrorEmail(errorDTO.getUserEmail(), errorDTO);
     }
 
+    /**
+     * Loads an email template from the classpath.
+     *
+     * @param templateName the name of the template file
+     * @return the content of the template as a string
+     * @throws IOException if an I/O error occurs while loading the template
+     */
     public String loadEmailTemplate(String templateName) throws IOException {
         InputStream resource = new ClassPathResource("templates/" + templateName).getInputStream();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
