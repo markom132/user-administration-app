@@ -61,7 +61,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         // Allow certain endpoints to be accessed without JWT validated
         if (requestURI.equals("/api/auth/login") ||
                 pathMatcher.match("/api/reset-password/{token}/{email}/{jwtToken}", requestURI) ||
-                pathMatcher.match("/api/activate-account/{activationToken}/{email}/{jwtToken}", requestURI)) {
+                pathMatcher.match("/api/activate-account/{activationToken}/{email}/{jwtToken}", requestURI) ||
+                pathMatcher.match("/swagger-ui/**", requestURI) ||
+                pathMatcher.match("/swagger-ui", requestURI) ||
+                pathMatcher.match("/swagger-ui.html", requestURI) ||
+                pathMatcher.match("/docs/**", requestURI) ||
+                pathMatcher.match("/api-docs/**", requestURI)) {
 
             filterChain.doFilter(request, response); //Proceed with the filter chain
             return; // Exit the method

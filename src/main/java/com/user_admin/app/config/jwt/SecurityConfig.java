@@ -65,8 +65,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         auth -> auth
                                 // Publicly accessible endpoints without authentication
-                                .requestMatchers("/reset_password/**", "/css/**", "/js/**", "/images/**", "/activate_account/**").permitAll()
-                                .requestMatchers("/api/auth/login", "/api/reset-password/**", "/api/activate-account/**").permitAll()
+                                .requestMatchers(
+                                        "/reset_password/**",
+                                        "/css/**", "/js/**", "/images/**",
+                                        "/activate_account/**",
+                                        "/api/auth/login", "/api/reset-password/**", "/api/activate-account/**",
+                                        // Swagger endpoints
+                                        "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-resources", "/swagger-ui.html", "/api-docs/**",
+                                        "/docs/**"
+                                ).permitAll()
                                 // All other endpoints require authentication
                                 .anyRequest().authenticated()
                 )
