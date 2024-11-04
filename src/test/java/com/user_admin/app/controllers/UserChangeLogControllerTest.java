@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.user_admin.app.config.jwt.JwtUtil;
 import com.user_admin.app.exceptions.ResourceNotFoundException;
 import com.user_admin.app.model.dto.UserChangeLogDTO;
+import com.user_admin.app.repository.RequestResponseLogRepository;
 import com.user_admin.app.repository.UserChangeLogRepository;
 import com.user_admin.app.service.UserChangeLogService;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,9 @@ public class UserChangeLogControllerTest {
 
     @MockBean
     private UserChangeLogRepository userChangeLogRepository;
+
+    @MockBean
+    private RequestResponseLogRepository requestResponseLogRepository;
 
     @MockBean
     private JwtUtil jwtUtil;
