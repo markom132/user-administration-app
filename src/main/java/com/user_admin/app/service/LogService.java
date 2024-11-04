@@ -42,7 +42,7 @@ public class LogService {
     /**
      * Retrieves all request/response logs.
      *
-     * @returna list of RequestResponseLogDTO objects containing all logs
+     * @return a list of RequestResponseLogDTO objects containing all logs
      */
     public List<RequestResponseLogDTO> getAllLogs() {
         List<RequestResponseLog> response = requestResponseLogRepository.findAll();
@@ -93,7 +93,7 @@ public class LogService {
      * @return the parsed LocalDateTime object
      * @throws IllegalArgumentException if the date string cannot be parsed
      */
-    private LocalDateTime parseDate(String dateString) {
+    public LocalDateTime parseDate(String dateString) {
         for (int i = 0; i < FORMATTERS.size(); i++) {
             DateTimeFormatter formatter = FORMATTERS.get(i);
             try {
