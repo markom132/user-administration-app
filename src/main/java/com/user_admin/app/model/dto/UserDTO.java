@@ -42,7 +42,7 @@ public class UserDTO {
      * User's first name.
      * Must be between 3 and 255 characters and cannot be blank.
      */
-    @NotBlank
+    @NotBlank(message = "First name cannot be blank")
     @Size(min = 3, max = 255, message = "First name must have between 3 and 255 characters")
     @JsonView(BasicInfo.class)
     private String firstName;
@@ -51,7 +51,7 @@ public class UserDTO {
      * User's last name.
      * Must be between 3 and 255 characters and cannot be blank.
      */
-    @NotBlank
+    @NotBlank(message = "Last name cannot be blank")
     @Size(min = 3, max = 255, message = "Last name must have between 3 and 255 characters")
     @JsonView(BasicInfo.class)
     private String lastName;
@@ -61,7 +61,7 @@ public class UserDTO {
      * Must be between 3 and 255 characters and must be a valid email format.
      */
     @Size(min = 3, max = 255, message = "Email must be between 3 and 255 characters")
-    @Email
+    @Email(message = "Email should be valid")
     @JsonView(BasicInfo.class)
     private String email;
 

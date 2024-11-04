@@ -2,6 +2,7 @@ package com.user_admin.app.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.user_admin.app.exceptions.ResourceNotFoundException;
 import com.user_admin.app.model.dto.ActivateAccountDTO;
 import com.user_admin.app.model.dto.LoginRequestDTO;
 import com.user_admin.app.model.dto.ResetPasswordDTO;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -175,7 +177,7 @@ public class UserController {
      */
     @GetMapping("/users")
     @JsonView(UserDTO.BasicInfo.class)
-    public List<UserDTO> getUsers(@RequestParam(required = true) String accountStatus,
+    public List<UserDTO> getUsers(@RequestParam(required = true) @Pattern(regexp = "ACTIVE|INACTIVE", message = "Invalid account status") String accountStatus,
                                   @RequestParam(required = false, defaultValue = "") String name,
                                   @RequestParam(required = false, defaultValue = "") String email) {
 
@@ -220,6 +222,8 @@ public class UserController {
     public ResponseEntity<?> getUser(@PathVariable Long id) {
         try {
             return ResponseEntity.status(HttpStatus.OK).body(userService.getUserById(id));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (RuntimeException e) {
             logger.error("Error retrieving user with ID {}: {}", id, e.getMessage());
 
