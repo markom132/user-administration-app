@@ -45,6 +45,12 @@ public class UserChangeLogService {
      */
     public List<UserChangeLogDTO> getUserChanges(Long id) {
         Optional<List<UserChangeLog>> userChanges = userChangeLogRepository.findByUserId(id);
+
+        if (userChanges.isEmpty() || userChanges.get().isEmpty()) {
+            logger.warn("No change logs found for user ID: {}", id);
+            throw new ResourceNotFoundException("User not found with ID: " + id);
+        }
+
         logger.info("Retrieved change logs for user ID: {}", id);
         return userChanges.map(userChangeLogMapper::toDtoList).orElseGet(Collections::emptyList);
     }
