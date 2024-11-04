@@ -80,7 +80,7 @@ public class AuthTokenService {
             return authTokenRepository.findByToken(token).orElseThrow(() ->
                     new ResourceNotFoundException("Token not found: " + token)
             );
-        } catch (ResourceNotFoundException e) {
+        } catch (DataAccessException e) {
             logger.error("Resource not found: {},", e.getMessage());
             throw new ResourceNotFoundException("Token not found" + e);
         }
@@ -112,14 +112,19 @@ public class AuthTokenService {
      * @param httpRequest    the HTTP request containing the authorization header
      */
     public void updateSessionTimeout(Integer sessionTimeout, HttpServletRequest httpRequest) {
-        String authorizationHeader = httpRequest.getHeader("Authorization");
-        String token = authorizationHeader.substring(7);
+        try {
+            String authorizationHeader = httpRequest.getHeader("Authorization");
+            String token = authorizationHeader.substring(7);
 
-        AuthToken authToken = findByToken(token);
-        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(sessionTimeout);
-        authToken.setExpiresAt(expiresAt);
+            AuthToken authToken = findByToken(token);
+            LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(sessionTimeout);
+            authToken.setExpiresAt(expiresAt);
 
-        authTokenRepository.save(authToken);
-        logger.info("Session timeout updated for token {}", token);
+            authTokenRepository.save(authToken);
+            logger.info("Session timeout updated for token {}", token);
+        } catch (DataAccessException e) {
+            logger.error("Database error: {},", e.getMessage());
+            throw new DatabaseException("Unable to update session timeout: " + e.getMessage());
+        }
     }
 }
