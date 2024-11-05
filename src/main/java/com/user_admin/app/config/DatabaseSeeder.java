@@ -40,14 +40,19 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if (userRepository.count() == 0) {
-            User user1 = new User("john.doe@example.com", passwordEncoder.encode("password123"), "John", "Doe", UserStatus.ACTIVE);
-            User user2 = new User("jane.smith@example.com", passwordEncoder.encode("password123"), "Jane", "Smith", UserStatus.ACTIVE);
-            User user3 = new User("markomarkoviccb@gmail.com", passwordEncoder.encode("password123"), "Jane", "Smith", UserStatus.ACTIVE);
+            User user1 = new User("john.doe@example.com", passwordEncoder.encode("Password123!"), "John", "Doe", UserStatus.ACTIVE);
+            User user2 = new User("jane.smith@example.com", passwordEncoder.encode("Password123!"), "Jane", "Smith", UserStatus.ACTIVE);
+            User user3 = new User("test1@example.com", passwordEncoder.encode("Password123!"), "Test1", "Test1", UserStatus.ACTIVE);
+            User user4 = new User("test2@example.com", passwordEncoder.encode("Password123!"), "Test2", "Test2", UserStatus.ACTIVE);
+            User user5 = new User("test3@example.com", passwordEncoder.encode("Password123!"), "Test3", "Test3", UserStatus.ACTIVE);
+
 
             // Saving initial users to the database
             userRepository.save(user1);
             userRepository.save(user2);
-            //userRepository.save(user3);
+            userRepository.save(user3);
+            userRepository.save(user4);
+            userRepository.save(user5);
 
             logger.info("Initial users have been successfully injected into the database.");
         } else {
