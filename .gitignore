@@ -1,33 +1,45 @@
-HELP.md
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# Maven target directory
+/target/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# IntelliJ IDEA files
+/.idea/
+/*.iml
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
+# Eclipse files
+/.classpath
+/.project
+/.settings/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+# VS Code files
+/.vscode/
 
-### VS Code ###
-.vscode/
+# Logs
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+
+# Local storage directory
+/storage/
+
+# Application-specific
+*.db
+*.local
+
+# Compiled classes
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Node (if using frontend dependencies like npm or yarn)
+/node_modules/
+
+# Docker
+docker-compose.override.yml
