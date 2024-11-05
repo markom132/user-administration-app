@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -303,4 +304,9 @@ public class UserController {
         }
     }
 
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<String> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        logger.warn("Invalid ID format: {}", ex.getValue());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid user ID format");
+    }
 }
