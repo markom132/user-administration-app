@@ -48,7 +48,7 @@ This is a Spring Boot-based REST APP for managing user data, including authentic
     
     spring.datasource.url=jdbc:mysql://localhost:3306/mysql_db(db name)
     spring.datasource.username=root (db username)
-    spring.datasource.password=password (db user password)
+    spring.datasource.password=db-user-password
     # Mail configuration
     spring.mail.username=u8471084@gmail.com (email sender)
     spring.mail.password=email-sender-password
