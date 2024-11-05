@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"email\": \"jane.smith@example.com\",\r\n  \"password\": \"Volimjavusvakidan1!\"\r\n}\r\n",
+					"raw": "{\r\n  \"email\": \"john.doe@example.com\",\r\n  \"password\": \"Password123!\"\r\n}\r\n",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -80,7 +80,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"firstName\": \"Marko\",\r\n    \"lastName\": \"Markovic\",\r\n    \"email\": \"{{email}}\"\r\n}",
+					"raw": "{\r\n    \"firstName\": \"John\",\r\n    \"lastName\": \"Doe\",\r\n    \"email\": \"{{email}}\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -152,7 +152,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"token\": \"19ff708ee9608f6f\",\r\n    \"email\": \"{{email}}\",\r\n    \"newPassword\": \"Volimjavusvakidan1!\",\r\n    \"confirmationPassword\": \"Volimjavusvakidan1!\"\r\n}",
+					"raw": "{\r\n    \"token\": \"your-password-reset-token-value\",\r\n    \"email\": \"{{email}}\",\r\n    \"newPassword\": \"Password123!\",\r\n    \"confirmationPassword\": \"Password123!\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -192,7 +192,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"activateAccountToken\": \"8bf84064b798ca14\",\r\n    \"email\": \"{{email}}\",\r\n    \"password\": \"Volimjavusvakidan1!\",\r\n    \"passwordConfirmation\": \"Volimjavusvakidan1!\"\r\n}",
+					"raw": "{\r\n    \"activateAccountToken\": \"your-activate-account-token\",\r\n    \"email\": \"{{email}}\",\r\n    \"password\": \"Password123!\",\r\n    \"passwordConfirmation\": \"Password123!\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -273,13 +273,13 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{baseUrl}}api/users/3",
+					"raw": "{{baseUrl}}api/users/{id}",
 					"host": [
 						"{{baseUrl}}api"
 					],
 					"path": [
 						"users",
-						"3"
+						"{id}"
 					]
 				}
 			},
@@ -302,7 +302,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"firstName\": \"Mares\",\r\n    \"lastName\": \"Markovic\",\r\n    \"email\": \"{{email}}\"\r\n}",
+					"raw": "{\r\n    \"firstName\": \"John\",\r\n    \"lastName\": \"Doe\",\r\n    \"email\": \"{{email}}\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -310,14 +310,14 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseUrl}}/api/users/3",
+					"raw": "{{baseUrl}}/api/users/{id}",
 					"host": [
 						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
 						"users",
-						"3"
+						"{id}"
 					]
 				}
 			},
@@ -339,14 +339,14 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "{{baseUrl}}/api/users/3/resend-account-activation-email",
+					"raw": "{{baseUrl}}/api/users/{id}/resend-account-activation-email",
 					"host": [
 						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
 						"users",
-						"3",
+						"{id}",
 						"resend-account-activation-email"
 					]
 				}
@@ -369,14 +369,14 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "{{baseUrl}}/api/users/3/set-account-state",
+					"raw": "{{baseUrl}}/api/users/{id}/set-account-state",
 					"host": [
 						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
 						"users",
-						"3",
+						"{id}",
 						"set-account-state"
 					]
 				}
@@ -399,14 +399,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{baseUrl}}/api/users/3/changelog",
+					"raw": "{{baseUrl}}/api/users/{id}/changelog",
 					"host": [
 						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
 						"users",
-						"3",
+						"{id}",
 						"changelog"
 					]
 				}
@@ -620,12 +620,12 @@
 		},
 		{
 			"key": "jwtToken",
-			"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqYW5lLnNtaXRoQGV4YW1wbGUuY29tIiwiaWF0IjoxNzMwMzg2MDg0LCJleHAiOjE3MzA0MjIwODR9.ChoZG4DAbWsVQubhym5ZdGGJFiqBiXGSJtHb5b2wriI",
+			"value": "enter-your-jwt-token",
 			"type": "string"
 		},
 		{
 			"key": "email",
-			"value": "markomarkoviccb@gmail.com",
+			"value": "john.doe@example.com",
 			"type": "string"
 		}
 	]
