@@ -51,7 +51,6 @@ This is a Spring Boot-based REST APP for managing user data, including authentic
     spring.mail.username=u8471084@gmail.com (email sender)
     spring.mail.password=email-sender-password
 
-
 5. **Running the Application**
 
    **Using Docker**:
