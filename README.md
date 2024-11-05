@@ -40,7 +40,7 @@ This is a Spring Boot-based REST APP for managing user data, including authentic
     ```bash
    dokcker-compose up -build
 
-4. **Configuration**
+4. ### **Configuration**
 
     Add the following configuration parameters in your application.properties file for database, mail, and JWT settings:
     # Database configuration
@@ -51,7 +51,7 @@ This is a Spring Boot-based REST APP for managing user data, including authentic
     spring.mail.username=u8471084@gmail.com (email sender)
     spring.mail.password=email-sender-password
 
-5. **Running the Application**
+5. ### **Running the Application**
 
    **Using Docker**:
 If you're using Docker, the application should be running on http://localhost:8080.
@@ -62,14 +62,14 @@ Alternatively, start it directly with Maven:
     ```bash
     mvn spring-boot:run
     ```
-
-6. **Testing**
-Run unit tests to ensure the service layer logic and controllers are functioning as expected:
+   
+6. ### **Testing**
+    Run unit tests to ensure the service layer logic and controllers are functioning as expected:
     ```bash
     mvn test
     ```
 
-7. **API Documentation**
+7. ### **API Documentation**
 After starting the application, access the API documentation (Swagger) at:
     ```bash
     http://localhost:8080/docs
