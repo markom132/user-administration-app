@@ -3,12 +3,16 @@ package com.user_admin.app.model.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * DTO for activating a user account. Contains necessary fields to
  * validate and activate an account.
  */
+@AllArgsConstructor
+@NoArgsConstructor
 @Data
 public class ActivateAccountDTO {
 

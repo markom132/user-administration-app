@@ -114,6 +114,9 @@ public class UserService {
      * @param authorizationHeader authorization header containing JWT token
      */
     public void logout(String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ") || authorizationHeader.length() < 8) {
+            throw new IllegalArgumentException("Invalid Authorization header format");
+        }
         logger.info("Logging out user with token: {}", authorizationHeader);
         String token = authorizationHeader.substring(7);
         AuthToken authToken = authTokenService.findByToken(token);
@@ -147,6 +150,11 @@ public class UserService {
 
         // Build reset link
         String authorizationHeader = request.getHeader("Authorization");
+
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ") || authorizationHeader.length() < 8) {
+            throw new IllegalArgumentException("Authorization header is missing or invalid");
+        }
+
         String jwtToken = authorizationHeader.substring(7);
 
         String resetLink = "http://localhost:8080/api/reset-password/" + resetToken + "/" + email + "/" + jwtToken;
@@ -247,6 +255,9 @@ public class UserService {
      * @return true if password meets requirements; false otherwise
      */
     public boolean isValidPassword(String password) {
+        if (password == null || password.isEmpty()) {
+            return false;
+        }
         String passwordRegex = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@#$%^&+=!]).{8,}$";
         return password.matches(passwordRegex);
     }
@@ -343,6 +354,9 @@ public class UserService {
      * @return list of UserDTOs that match the specified filters
      */
     public List<UserDTO> getUsersByFilters(String status, String name, String email) {
+        if (status == null || status.isEmpty()) {
+            throw new RuntimeException("Status must not be empty");
+        }
         logger.info("Fetching users by filters - Status: {}, Name: {}, Email: {}", status, name, email);
 
         String firstName = "";
@@ -449,15 +463,18 @@ public class UserService {
         if (!user.getFirstName().equals(updatedData.getFirstName().toUpperCase())) {
             changeLog = userChangeLogService.fillUserChangeLogDTO("firstName", user.getFirstName(), updatedData.getFirstName().toUpperCase());
             userChangeLogService.logChange(changeLog, user, request);
-        } else if (!user.getLastName().equals(updatedData.getLastName().toUpperCase())) {
+        }
+
+        if (!user.getLastName().equals(updatedData.getLastName().toUpperCase())) {
             changeLog = userChangeLogService.fillUserChangeLogDTO("lastName", user.getLastName(), updatedData.getLastName().toUpperCase());
             userChangeLogService.logChange(changeLog, user, request);
+        }
 
-        } else if (!user.getEmail().equals(updatedData.getEmail())) {
+        if (!user.getEmail().equals(updatedData.getEmail())) {
             changeLog = userChangeLogService.fillUserChangeLogDTO("email", user.getEmail(), updatedData.getEmail());
             userChangeLogService.logChange(changeLog, user, request);
-
         }
+
 
         // Update and save user
         user.setFirstName(updatedData.getFirstName().toUpperCase());
