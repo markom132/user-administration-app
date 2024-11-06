@@ -21,6 +21,7 @@ import org.springframework.security.crypto.keygen.KeyGenerators;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -132,7 +133,7 @@ public class UserService {
      * @param request HTTP request with authorization details
      */
     @Transactional
-    public void forgotPassword(String email, HttpServletRequest request) {
+    public void forgotPassword(String email, HttpServletRequest request) throws IOException {
         logger.info("Processing forgot password request for email: {}", email);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
@@ -396,7 +397,7 @@ public class UserService {
      * @param request HTTP request for retrieving authorization token
      * @return UserDTO containing details of the newly created user
      */
-    public UserDTO createUser(UserDTO userDTO, HttpServletRequest request) {
+    public UserDTO createUser(UserDTO userDTO, HttpServletRequest request) throws IOException {
         logger.info("Creating new user with email: {}", userDTO.getEmail());
 
         String email = userDTO.getEmail();
@@ -494,7 +495,7 @@ public class UserService {
      * @throws ResourceNotFoundException if user with specified ID is not found
      * @throws RuntimeException          if user is already active
      */
-    public void resendActivationEmail(Long id, HttpServletRequest request) {
+    public void resendActivationEmail(Long id, HttpServletRequest request) throws IOException {
         logger.info("Resending activation email for user with ID: {}", id);
 
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User with ID: " + id + " not found"));

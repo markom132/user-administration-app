@@ -24,6 +24,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -194,7 +195,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testForgotPassword_Success() {
+    void testForgotPassword_Success() throws IOException {
         String email = "user@example.com";
         User user = new User();
         user.setEmail(email);
@@ -222,7 +223,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testForgotPassword_UserNotFound() {
+    void testForgotPassword_UserNotFound() throws IOException {
         String email = "user@example.com";
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
@@ -236,7 +237,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testForgotPassword_UserInactive() {
+    void testForgotPassword_UserInactive() throws IOException {
         String email = "user@example.com";
         User user = new User();
         user.setEmail(email);
@@ -253,7 +254,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testForgotPassword_MissingAuthorizationHeader() {
+    void testForgotPassword_MissingAuthorizationHeader() throws IOException {
         String email = "user@example.com";
         User user = new User();
         user.setEmail(email);
@@ -647,7 +648,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testCreateUser_Success() {
+    void testCreateUser_Success() throws IOException {
         when(userRepository.findByEmail(userDTO.getEmail())).thenReturn(Optional.empty());
         when(userMapper.toEntity(userDTO)).thenReturn(user);
         when(passwordEncoder.encode(anyString())).thenReturn("hashedToken");
@@ -672,7 +673,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testCreateUser_SendsActivationEmail() {
+    void testCreateUser_SendsActivationEmail() throws IOException {
         when(userRepository.findByEmail(userDTO.getEmail())).thenReturn(Optional.empty());
         when(userMapper.toEntity(userDTO)).thenReturn(user);
         when(passwordEncoder.encode(anyString())).thenReturn("hashedToken");
@@ -684,7 +685,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testCreateUser_GeneratesActivationToken() {
+    void testCreateUser_GeneratesActivationToken() throws IOException {
         when(userRepository.findByEmail(userDTO.getEmail())).thenReturn(Optional.empty());
         when(userMapper.toEntity(userDTO)).thenReturn(user);
         when(passwordEncoder.encode(anyString())).thenReturn("hashedToken");
@@ -816,7 +817,7 @@ public class UserServiceTest {
 
 
     @Test
-    public void resendActivationEmail_UserFound_EmailSent() {
+    public void resendActivationEmail_UserFound_EmailSent() throws IOException {
         user.setStatus(UserStatus.INACTIVE);
 
         PasswordResetToken token = new PasswordResetToken();

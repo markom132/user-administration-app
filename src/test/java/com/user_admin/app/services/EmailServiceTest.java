@@ -1,6 +1,7 @@
 package com.user_admin.app.services;
 
 import com.user_admin.app.model.dto.ErrorDTO;
+import com.user_admin.app.service.EmailAsyncService;
 import com.user_admin.app.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -33,10 +34,12 @@ public class EmailServiceTest {
 
     private EmailService emailService;
 
+    private EmailAsyncService emailAsyncService;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        emailService = new EmailService(mailSender);
+        emailService = new EmailService(emailAsyncService);
     }
 
     @Test

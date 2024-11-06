@@ -2,13 +2,8 @@ package com.user_admin.app.service;
 
 import com.user_admin.app.model.dto.ErrorDTO;
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.HttpServletRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -27,11 +22,10 @@ import java.util.Optional;
 @Service
 public class EmailService {
 
-    private final JavaMailSender mailSender;
-    private final Logger logger = LoggerFactory.getLogger(EmailService.class);
+    private final EmailAsyncService emailAsyncService;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    public EmailService(EmailAsyncService emailAsyncService) {
+        this.emailAsyncService = emailAsyncService;
     }
 
     /**
@@ -40,32 +34,12 @@ public class EmailService {
      * @param to        the recipient's email address
      * @param resetLink the link to reset the password
      */
-    public void sendResetPasswordEmail(String to, String resetLink) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+    public void sendResetPasswordEmail(String to, String resetLink) throws IOException {
+        String htmlContent = loadEmailTemplate("password_reset_template.html");
+        htmlContent = htmlContent.replace("{{resetLink}}", resetLink);
 
-            helper.setTo(to);
-            helper.setSubject("Reset Your Password");
-
-            String htmlContent = loadEmailTemplate("password_reset_template.html");
-
-            htmlContent = htmlContent.replace("{{resetLink}}", resetLink);
-
-            helper.setText(htmlContent, true);
-
-            ClassPathResource image = new ClassPathResource("static/password.png");
-            helper.addInline("logoImage", image);
-
-            mailSender.send(message);
-            logger.info("Reset password email sent to {}", to);
-        } catch (MessagingException e) {
-            logger.error("Failed to send reset password email: {}", e.getMessage());
-            throw new RuntimeException("Failed to send reset password email", e);
-        } catch (IOException e) {
-            logger.error("I/O error while sending reset password email: {}", e.getMessage());
-            throw new RuntimeException(e);
-        }
+        // Send email asynchronously
+        emailAsyncService.sendEmail(to, "Reset Your Password", htmlContent, "static/password.png");
     }
 
     /**
@@ -74,74 +48,28 @@ public class EmailService {
      * @param to           the recipient's email address
      * @param activateLink the link to activate the account
      */
-    public void sendActivateAccountEmail(String to, String activateLink) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+    public void sendActivateAccountEmail(String to, String activateLink) throws IOException {
+        String htmlContent = loadEmailTemplate("activate_account_template.html");
+        htmlContent = htmlContent.replace("{{activateLink}}", activateLink);
 
-            helper.setTo(to);
-            helper.setSubject("Activate Your Account");
-
-            String htmlContent = loadEmailTemplate("activate_account_template.html");
-
-            htmlContent = htmlContent.replace("{{activateLink}}", activateLink);
-
-            helper.setText(htmlContent, true);
-
-            ClassPathResource image = new ClassPathResource("static/user.png");
-            helper.addInline("logoImage", image);
-
-            mailSender.send(message);
-            logger.info("Account activation email sent to {}", to);
-        } catch (MessagingException e) {
-            logger.error("Failed to send activate account email: {}", e.getMessage());
-            throw new RuntimeException("Failed to send reset password email", e);
-        } catch (IOException e) {
-            logger.error("I/O error while sending activate account email: {}", e.getMessage());
-            throw new RuntimeException(e);
-        }
+        // Send email asynchronously
+        emailAsyncService.sendEmail(to, "Activate Your Account", htmlContent, "static/user.png");
     }
+
 
     /**
      * Sends an error notification email to the specified address.
      *
      * @param to       the recipient's email address
      * @param errorDTO the error information to include in the email
-     * @throws MessagingException if an error occurs while creating email
-     * @throws IOException        if an I/O error occurs while loading the template
+     * @throws IOException if an I/O error occurs while loading the template
      */
-    public void sendErrorEmail(String to, ErrorDTO errorDTO) throws MessagingException, IOException {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+    public void sendErrorEmail(String to, ErrorDTO errorDTO) throws IOException {
+        String htmlContent = loadEmailTemplate("error_occurred_template.html");
+        htmlContent = replaceErrorTemplatePlaceholders(htmlContent, errorDTO);
 
-            helper.setTo(to);
-            helper.setSubject("Error occurred");
-
-            String htmlContent = loadEmailTemplate("error_occurred_template.html");
-            htmlContent = htmlContent.replace("{{createdAt}}", errorDTO.getCreatedAt());
-            htmlContent = htmlContent.replace("{{user_id}}", errorDTO.getUserEmail());
-            htmlContent = htmlContent.replace("{{api}}", errorDTO.getApi());
-            htmlContent = htmlContent.replace("{{request}}", errorDTO.getRequest());
-            htmlContent = htmlContent.replace("{{message}}", errorDTO.getMessage());
-            htmlContent = htmlContent.replace("{{codeLine}}", String.valueOf(errorDTO.getCodeLine()));
-
-            StringBuilder entryParamsTable = new StringBuilder();
-            for (Map.Entry<String, Object> entry : errorDTO.getEntryParams().entrySet()) {
-                entryParamsTable.append("<tr><td>").append(entry.getKey()).append("</td><td>").append(entry.getValue()).append("</td></tr>");
-            }
-
-            htmlContent = htmlContent.replace("{{entryParamsTable}}", entryParamsTable.toString());
-            helper.setText(htmlContent, true);
-            mailSender.send(message);
-            logger.info("Error email send to {}", to);
-        } catch (MessagingException e) {
-            logger.error("Failed to send error occurred email: {}", e.getMessage());
-            throw new RuntimeException("Failed to send error occurred email", e);
-        } catch (IOException e) {
-            logger.error("I/O error while sending error occurred email: {}", e.getMessage());
-            throw new RuntimeException(e);
-        }
+        // Send email asynchronously
+        emailAsyncService.sendEmail(to, "Error occurred", htmlContent, null);
     }
 
     /**
@@ -187,6 +115,39 @@ public class EmailService {
         errorDTO.setEntryParams(params);
 
         sendErrorEmail(errorDTO.getUserEmail(), errorDTO);
+    }
+
+    /**
+     * Replaces placeholders in the provided HTML content with values from the ErrorDTO object.
+     * This method is used to dynamically populate an error template with the actual error details.
+     *
+     * @param htmlContent The HTML content of the error template containing placeholders.
+     * @param errorDTO    The ErrorDTO object containing the error details to be inserted into the template.
+     * @return The HTML content with placeholders replaced by actual error details.
+     */
+    private String replaceErrorTemplatePlaceholders(String htmlContent, ErrorDTO errorDTO) {
+        // Replace the placeholders in the HTML content with values from the errorDTO object
+        htmlContent = htmlContent.replace("{{createdAt}}", errorDTO.getCreatedAt());
+        htmlContent = htmlContent.replace("{{user_id}}", errorDTO.getUserEmail());
+        htmlContent = htmlContent.replace("{{api}}", errorDTO.getApi());
+        htmlContent = htmlContent.replace("{{request}}", errorDTO.getRequest());
+        htmlContent = htmlContent.replace("{{message}}", errorDTO.getMessage());
+        htmlContent = htmlContent.replace("{{codeLine}}", errorDTO.getCodeLine());
+
+        // Build the entry parameters table dynamically using the values from errorDTO
+        StringBuilder entryParamsTable = new StringBuilder();
+        for (Map.Entry<String, Object> entry : errorDTO.getEntryParams().entrySet()) {
+            entryParamsTable.append("<tr><td>")
+                    .append(entry.getKey()) // Add entry parameter key
+                    .append("</td><td>")
+                    .append(entry.getValue()) // Add entry parameter value
+                    .append("</td></tr>");
+        }
+
+        // Replace the placeholder for entryParamsTable with the generated table
+        htmlContent = htmlContent.replace("{{entryParamsTable}}", entryParamsTable.toString());
+
+        return htmlContent;
     }
 
     /**
