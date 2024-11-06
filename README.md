@@ -44,13 +44,13 @@ This is a Spring Boot-based REST APP for managing user data, including authentic
 4. ### **Configuration**
 
     Add the following configuration parameters in your application.properties file for database, mail, and JWT settings:
-    # Database configuration
+    #### Database configuration
    (Changes to this are needed only if you want to start app locally, this works for docker!!!)
     
     spring.datasource.url=jdbc:mysql://localhost:3306/mysql_db(db name)
     spring.datasource.username=root (db username)
     spring.datasource.password=db-user-password
-    # Mail configuration
+    #### Mail configuration
     spring.mail.username=u8471084@gmail.com (email sender)
     spring.mail.password=email-sender-password
 
