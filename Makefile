@@ -1,7 +1,11 @@
 # Makefile for Docker commands
 
-# Build and start Docker containers in detached mode
+# Start Docker containers if images already exists
 up:
+	docker-compose up -d
+
+# Recreates images and starts containers
+build-and-up:
 	docker-compose up --build -d
 
 # Stop and remove Docker containers

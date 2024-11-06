@@ -88,7 +88,13 @@ After starting the application, access the API documentation (Swagger) at:
     ```
    
     Builds and starts Docker containers in detached mode. Use this to run the application along with the MySQL database.
-                
+
+   ### **Recreates images and starts containers**
+   ```bash
+   make build-and-up
+   ```
+   
+   Removes all images and recreates them. After that starts containers with them 
     #### **Stop containers:**
     ```bash
    make down

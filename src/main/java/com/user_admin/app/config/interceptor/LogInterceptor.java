@@ -94,6 +94,12 @@ public class LogInterceptor implements HandlerInterceptor {
      */
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws IOException {
+        String requestUri = request.getRequestURI();
+
+        // Check if the endpoint is excluded from logging
+        if (excludedEndpointsConfig.getExcludedEndpoint().contains(requestUri)) {
+            return;
+        }
         // Retrieve the wrapped response to access cached response body content
         CachedBodyHttpServletResponse responseWrapper = (CachedBodyHttpServletResponse) request.getAttribute("responseWrapper");
 

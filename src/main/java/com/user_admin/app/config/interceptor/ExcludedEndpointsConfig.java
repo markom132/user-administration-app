@@ -30,7 +30,6 @@ public class ExcludedEndpointsConfig {
      * @return List of excluded endpoint paths.
      */
     public List<String> getExcludedEndpoint() {
-        logger.info("Fetching excluded endpoints from configuration.");
         List<String> excludedEndpoints = Arrays.asList(excludedEndpoint.split(","));
         logger.debug("Excluded endpoints list: {}", excludedEndpoints);
 
