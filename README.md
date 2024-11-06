@@ -9,6 +9,7 @@ This is a Spring Boot-based REST APP for managing user data, including authentic
 - [Running the Application](#running-the-application)
 - [Testing](#testing)
 - [API Documentation](#api-documentation)
+- [Makefile Commands](#makefile-commands)
 
 ---
 
@@ -76,3 +77,61 @@ After starting the application, access the API documentation (Swagger) at:
     ```bash
     http://localhost:8080/docs
     ```
+
+8. ### **Makefile Commands**
+   The Makefile contains a set of commands to manage Docker containers and the Spring Boot application. Here are the available commands:
+  
+    #### **Start containers:**
+    ```bash
+    make up
+    ```
+   
+    Builds and starts Docker containers in detached mode. Use this to run the application along with the MySQL database.
+                
+    #### **Stop containers:**
+    ```bash
+   make down
+    ```
+   Stops and removes all running containers.
+
+    #### **Restart containers:**
+    ```bash
+    make restart
+   ```
+
+    Stops and restarts the containers.
+
+    #### **Clean up Docker resources:**
+    ```bash
+    make clean
+    ```
+
+   Removes unused Docker images, containers, and volumes.
+
+    #### **Run tests:**
+    ```bash
+    make test
+   ```
+
+   Runs unit tests for the application.
+
+    #### **Backup database:**
+    ```bash
+    make backup
+    ```
+
+   Creates a backup of the current database in the backups directory with a timestamped filename.
+
+    #### **Restore database from backup:**
+    ```bash
+    make restore
+    ```
+
+   Restores the database from the latest backup file in the backups directory.
+
+    #### **Access the Spring Boot container:**
+    ```bash
+    make java
+    ```
+
+   Opens an interactive shell in the Spring Boot container for executing CLI commands.
